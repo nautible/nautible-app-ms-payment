@@ -24,7 +24,7 @@ jobs:
     - name: Checkout manifest repo
       uses: actions/checkout@v2
       with:
-        repository: rashinban/nautible-app-payment-manifest
+        repository: nautible/nautible-app-payment-manifest
         path: nautible-app-payment-manifest
         token: ${{ secrets.PAT }}
     - name: Set up JDK 11
@@ -77,4 +77,4 @@ jobs:
         git add .
         git commit -m "update manifest"
         git push --set-upstream origin $tag
-        curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $token" "https://api.github.com/repos/rashinban/nautible-app-payment-manifest/pulls" -d '{"title": "new image deploy request", "head": "rashinban:'$tag'", "base": "main"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
+        curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $token" "https://api.github.com/repos/nautible/nautible-app-payment-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$tag'", "base": "main"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
