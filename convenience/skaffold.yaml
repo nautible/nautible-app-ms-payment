@@ -1,0 +1,20 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: nautible-app-payment-convenience
+build:
+  artifacts:
+    - image: public.ecr.aws/nautible/nautible-app-payment-convenience
+      custom:
+        buildCommand: build.cmd
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - "target"
+  local:
+    push: false
+deploy:
+  kustomize:
+    paths:
+      - ../../nautible-app-payment-manifest/convenience/overlays/local-dev

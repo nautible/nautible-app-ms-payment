@@ -1,0 +1,170 @@
+openapi: "3.0.2"
+info:
+  title: nautible-app-payment-cash
+  version: 1.0.0-SNAPSHOT
+servers:
+  - url: http://localhost:8080/
+paths:
+  /payment/{paymentNo}:
+    get:
+      tags:
+        - RestPaymentService
+      operationId: get
+      summary: Get payment by paymentNo
+      description: Get a payment
+      parameters:
+        - name: paymentNo
+          in: path
+          description: paymentNo
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
+    delete:
+      tags:
+        - RestPaymentService
+      operationId: delete
+      summary: Delete payment by paymentNo
+      description: Delete a payment
+      parameters:
+        - name: paymentNo
+          in: path
+          description: paymentNo
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: successful operation
+          content: {}
+        404:
+          description: not found
+          content: {}
+  /payment/:
+    post:
+      tags:
+        - RestPaymentService
+      operationId: create
+      summary: Create Payment
+      description: Create Payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestCreatePayment"
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
+    put:
+      tags:
+        - RestPaymentService
+      operationId: update
+      summary: Update Payment
+      description: Update Payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestUpdatePayment"
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
+components:
+  schemas:
+    RestCreatePayment:
+      type: object
+      required:
+        - orderNo
+        - orderDate
+        - customerId
+        - totalPrice
+      properties:
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+    RestUpdatePayment:
+      type: object
+      required:
+        - paymentNo
+        - orderNo
+        - orderDate
+        - customerId
+        - totalPrice
+      properties:
+        paymentNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+    RestPayment:
+      type: object
+      properties:
+        paymentNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+        orderStatus:
+          type: string
+          example: "01"
+

@@ -1,0 +1,20 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: nautible-app-payment-credit
+build:
+  artifacts:
+    - image: public.ecr.aws/nautible/nautible-app-payment-credit
+      custom:
+        buildCommand: build.cmd
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - "target"
+  local:
+    push: false
+deploy:
+  kustomize:
+    paths:
+      - ../../nautible-app-payment-manifest/credit/overlays/local-dev
