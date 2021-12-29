@@ -4,16 +4,13 @@ metadata:
   name: nautible-app-payment-cash
 build:
   artifacts:
-    - image: public.ecr.aws/nautible/nautible-app-payment-cash
-      custom:
-        buildCommand: build.cmd
-        dependencies:
-          paths:
-            - "."
-          ignore:
-            - "target"
+    - image: nautible-app-payment-cash
+      context: ./
+      docker:
+        dockerfile: ./Docker/Dockerfile
   local:
     push: false
+    useBuildkit: true
 deploy:
   kustomize:
     paths:

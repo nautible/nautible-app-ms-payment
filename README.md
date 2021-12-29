@@ -2,10 +2,10 @@
 
 nautible-app-payment project
 
-# アーキテクチャ図
+## アーキテクチャ図
 
 ![アーキテクチャイメージ](./architecture.png)
-# 機能
+## 機能
 
 - cash
   - 代引き決済を行うダミーサービス
@@ -24,6 +24,55 @@ nautible-app-payment project
     - 決済キャンセル
 - bff
   - 各種決済サービスを呼び出して結果を返すフロントサービス
+
+## サンプルアプリ利用手順
+
+
+## アプリ構築手順
+
+### 前提
+
+golang(v16)はインストール済みとする
+
+### OpenAPI
+
+- oapi-codegenを導入
+
+```
+$ go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.9.0
+```
+
+- YAMLファイルを準備
+  - 参考：bff/openapi/内のYAMLファイル
+
+- クライアントコード生成
+
+```
+$ oapi-codegen -package outbound -generate "types" -o src/outbound/payment_types.go openapi/payment.yaml
+$ oapi-codegen -package outbound -generate "client" -o src/outbound/http_client.go openapi/payment.yaml
+```
+
+- サーバーコード生成（bff）
+
+```
+$ oapi-codegen -package inbound -generate "types" -o generate/server/types.go openapi/payment.yaml
+$ oapi-codegen -package inbound -generate "chi-server" -o generate/server/server.go openapi/payment.yaml
+$ oapi-codegen -package inbound -generate "spec" -o generate/server/spec.go openapi/payment.yaml
+```
+
+- サーバーコード生成（cach,convenience,credit）
+
+```
+$ oapi-codegen -package inbound -generate "types" -o src/inbound/payment_types.go openapi/payment.yaml
+$ oapi-codegen -package inbound -generate "chi-server" -o src/inbound/payment_gen.go openapi/payment.yaml
+$ oapi-codegen -package inbound -generate "spec" -o src/inbound/spec.go openapi/payment.yaml
+```
+
+### go mod
+
+```
+$ go mod init bff 
+```
 
 # 以下TODO
 # OpenAPI

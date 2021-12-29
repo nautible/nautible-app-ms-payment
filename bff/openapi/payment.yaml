@@ -1,0 +1,279 @@
+openapi: "3.0.2"
+info:
+  title: nautible-app-payment
+  version: 1.0.0-SNAPSHOT
+servers:
+  - url: http://localhost:8080/
+paths:
+  /payment/{paymentNo}:
+    get:
+      tags:
+        - RestPaymentService
+      operationId: getByPaymentNo
+      summary: Find order by PaymentNo
+      description: Returns a single order
+      parameters:
+        - name: paymentNo
+          in: path
+          description: PaymentNo
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
+    delete:
+      tags:
+        - RestPaymentService
+      operationId: delete
+      summary: Delete payment by paymentNo
+      description: Delete a payment
+      parameters:
+        - name: paymentNo
+          in: path
+          description: paymentNo
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: successful operation
+          content: {}
+        404:
+          description: not found
+          content: {}
+  /payment/:
+    get:
+      tags:
+        - RestPaymentService
+      operationId: find
+      summary: Find payments
+      description: Returns payment
+      parameters:
+        - name: customerId
+          in: query
+          description: customerId
+          schema:
+            type: integer
+            format: int32
+        - name: orderDateFrom
+          in: query
+          description: order date from
+          schema:
+            type: string
+        - name: orderDateTo
+          in: query
+          description: order date to
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
+    put:
+      tags:
+        - RestPaymentService
+      operationId: update
+      summary: Update Payment
+      description: Update Payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestUpdatePayment"
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
+  /payment/create:
+    post:
+      tags:
+        - RestPaymentService
+      operationId: create
+      summary: Create Payment for SAGA
+      description: Create Payment for SAGA
+      requestBody:
+        content:
+          "application/cloudevents+json":
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: successful operation
+          content: {}
+  /payment/rejectCreate:
+    post:
+      tags:
+        - RestPaymentService
+      operationId: rejectCreate
+      summary: Reject Create Payment for SAGA
+      description: Reject Create Payment for SAGA
+      requestBody:
+        content:
+          "application/cloudevents+json":
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: successful operation
+          content: {}
+  /dapr/subscribe:
+    get:
+      tags:
+        - RestPaymentService
+      operationId: daprSubscribe
+      summary: daprSubscribe
+      description: daprSubscribe
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DaprSubscribe'
+components:
+  schemas:
+    RestUpdatePayment:
+      type: object
+      required:
+        - paymentNo
+        - orderNo
+        - orderDate
+        - customerId
+        - totalPrice
+        - paymentType
+      properties:
+        paymentNo:
+          type: string
+          example: "1"
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        acceptNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+        paymentType:
+          type: string
+          example: "01"
+    RestCreatePayment:
+      type: object
+      required:
+        - requestId
+        - orderDate
+        - customerId
+        - totalPrice
+        - paymentType
+        - orderNo
+      properties:
+        requestId:
+          description: 処理要求を一意に表すリクエストId。
+          type: string
+          example: O0000000001
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+        paymentType:
+          type: string
+          example: "01"
+    RestRejectCreatePayment:
+      type: object
+      required:
+        - requestId
+      properties:
+        requestId:
+          description: 処理要求を一意に表すリクエストId。
+          type: string
+          example: O0000000001
+    RestPayment:
+      type: object
+      properties:
+        paymentNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        acceptNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        receiptDate:
+          type: string
+          example: "2021-01-01 23:10:12"
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+        orderStatus:
+          type: string
+          example: "01"
+    DaprSubscribe:
+      type: object
+      properties:
+        pubsubname:
+          type: string
+          description: pubsub
+          example: pubsub
+        topic:
+          type: string
+          description: topic
+          example: topic
+        route:
+          type: string
+          description: route
+          example: /create
+
