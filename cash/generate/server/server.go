@@ -13,21 +13,15 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// daprSubscribe
-	// (GET /dapr/subscribe)
-	DaprSubscribe(w http.ResponseWriter, r *http.Request)
 	// Find payments
-	// (GET /payment/)
+	// (GET /payment)
 	Find(w http.ResponseWriter, r *http.Request, params FindParams)
-	// Update Payment
-	// (PUT /payment/)
-	Update(w http.ResponseWriter, r *http.Request)
-	// Create Payment for SAGA
-	// (POST /payment/create)
+	// Create Payment
+	// (POST /payment)
 	Create(w http.ResponseWriter, r *http.Request)
-	// Reject Create Payment for SAGA
-	// (POST /payment/rejectCreate)
-	RejectCreate(w http.ResponseWriter, r *http.Request)
+	// Update Payment
+	// (PUT /payment)
+	Update(w http.ResponseWriter, r *http.Request)
 	// Delete payment by paymentNo
 	// (DELETE /payment/{paymentNo})
 	Delete(w http.ResponseWriter, r *http.Request, paymentNo string)
@@ -44,21 +38,6 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
-
-// DaprSubscribe operation middleware
-func (siw *ServerInterfaceWrapper) DaprSubscribe(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DaprSubscribe(w, r)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
 
 // Find operation middleware
 func (siw *ServerInterfaceWrapper) Find(w http.ResponseWriter, r *http.Request) {
@@ -113,21 +92,6 @@ func (siw *ServerInterfaceWrapper) Find(w http.ResponseWriter, r *http.Request) 
 	handler(w, r.WithContext(ctx))
 }
 
-// Update operation middleware
-func (siw *ServerInterfaceWrapper) Update(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Update(w, r)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
 // Create operation middleware
 func (siw *ServerInterfaceWrapper) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -143,12 +107,12 @@ func (siw *ServerInterfaceWrapper) Create(w http.ResponseWriter, r *http.Request
 	handler(w, r.WithContext(ctx))
 }
 
-// RejectCreate operation middleware
-func (siw *ServerInterfaceWrapper) RejectCreate(w http.ResponseWriter, r *http.Request) {
+// Update operation middleware
+func (siw *ServerInterfaceWrapper) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RejectCreate(w, r)
+		siw.Handler.Update(w, r)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -324,19 +288,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/dapr/subscribe", wrapper.DaprSubscribe)
+		r.Get(options.BaseURL+"/payment", wrapper.Find)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/payment/", wrapper.Find)
+		r.Post(options.BaseURL+"/payment", wrapper.Create)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/payment/", wrapper.Update)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/payment/create", wrapper.Create)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/payment/rejectCreate", wrapper.RejectCreate)
+		r.Put(options.BaseURL+"/payment", wrapper.Update)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/payment/{paymentNo}", wrapper.Delete)

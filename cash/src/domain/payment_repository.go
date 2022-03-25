@@ -5,6 +5,6 @@ import (
 )
 
 type PaymentRepository interface {
-	PutItem(context.Context, PaymentItem) error
-	GetItem(context.Context, string) PaymentItem
+	PutItem(context.Context, *PaymentItem) (*PaymentItem, error)
+	GetItem(context.Context, string) (*PaymentItem, error)
 }

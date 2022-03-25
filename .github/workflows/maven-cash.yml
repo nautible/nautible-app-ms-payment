@@ -1,7 +1,4 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-name: Java CI with Maven Cash Application
+name: Go CI Cash Application
 
 on:
   push:
@@ -24,23 +21,9 @@ jobs:
     - name: Checkout manifest repo
       uses: actions/checkout@v2
       with:
-        repository: nautible/nautible-app-payment-manifest
-        path: nautible-app-payment-manifest
+        repository: nautible/nautible-app-ms-payment-manifest
+        path: nautible-app-ms-payment-manifest
         token: ${{ secrets.PAT }}
-    - name: Set up JDK 11
-      uses: actions/setup-java@v1
-      with:
-        java-version: 11
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Build with Maven
-      run: |
-        cd cash
-        mvn -B package --file pom.xml -Dquarkus.package.type=fast-jar
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -56,10 +39,10 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
-        ECR_REPOSITORY: nautible-app-payment-cash
+        ECR_REPOSITORY: nautible-app-ms-payment-cash
       run: |
         cd $GITHUB_WORKSPACE/cash
-        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./src/main/docker/Dockerfile.jvm .
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Docker/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
@@ -69,12 +52,12 @@ jobs:
         tag: update-image-feature-${{ github.sha }}
         token: ${{ secrets.PAT }}
       run: |
-        cd $GITHUB_WORKSPACE/nautible-app-payment-manifest
+        cd $GITHUB_WORKSPACE/nautible-app-ms-payment-manifest
         git checkout -b $tag
-        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-payment-cash:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-payment-cash:'$IMAGE_TAG'/' ./cash/base/payment-cash-deploy.yaml 
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-cash:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-cash:'$IMAGE_TAG'/' ./cash/base/payment-cash-deploy.yaml 
         git config user.name github-actions
         git config user.email github-actions@github.com
         git add .
         git commit -m "update manifest"
         git push --set-upstream origin $tag
-        curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $token" "https://api.github.com/repos/nautible/nautible-app-payment-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$tag'", "base": "main"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
+        curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $token" "https://api.github.com/repos/nautible/nautible-app-ms-payment-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$tag'", "base": "main"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s

@@ -2,76 +2,82 @@ package outbound
 
 import (
 	"context"
+	"fmt"
+	"time"
+
+	"payment-cash/src/domain"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-
-	"cash/src/domain"
+	"github.com/guregu/dynamo"
 )
 
 type paymentStruct struct {
-	db *dynamodb.DynamoDB
+	db *dynamo.DB
 }
 
-func NewPaymentDB(db *dynamodb.DynamoDB) domain.PaymentRepository {
-	return &paymentStruct{db: db}
-}
-func (p *paymentStruct) PutItem(ctx context.Context, model domain.PaymentItem) error {
-
-	av, err := dynamodbattribute.MarshalMap(model)
+func NewPaymentDB() domain.PaymentRepository {
+	db, err := createSession()
 	if err != nil {
 		panic(err)
 	}
-	_, result := p.db.PutItemWithContext(ctx, &dynamodb.PutItemInput{
-		TableName: aws.String("Payment"),
-		Item:      av,
-	})
-	return result
+	return &paymentStruct{db: db}
 }
 
-func (p *paymentStruct) GetItem(ctx context.Context, paymentNo string) domain.PaymentItem {
+// 決済データの登録
+func (p *paymentStruct) PutItem(ctx context.Context, model *domain.PaymentItem) (*domain.PaymentItem, error) {
+	paymentNo, err := sequence(ctx, p.db)
+	if err != nil {
+		return nil, err
+	}
+	model.PaymentNo = fmt.Sprintf("C%09d", *paymentNo) // dummy クレジットの支払い番号はC始まりとする
+	model.AcceptNo = fmt.Sprintf("A%09d", *paymentNo)  // dummy 受付番号はA始まりとする
+	model.ReceiptDate = time.Now().String()            // dummy
+	table := p.db.Table("Payment")
+	if err := table.Put(model).Run(); err != nil {
+		fmt.Printf("Failed to put item[%v]\n", err)
+		return nil, err
+	}
+	fmt.Println("accept : " + model.AcceptNo)
+	return model, nil
+}
 
-	session, err := session.NewSession(&aws.Config{
+// paymentNoに該当する決済データを取得
+func (p *paymentStruct) GetItem(ctx context.Context, paymentNo string) (*domain.PaymentItem, error) {
+	table := p.db.Table("Payment")
+	var result domain.PaymentItem
+	err := table.Get("PaymentNo", paymentNo).One(&result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func createSession() (*dynamo.DB, error) {
+	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-northeast-1"),
-		Endpoint:    aws.String("http://payment-localstack:4566"),
+		Endpoint:    aws.String("http://payment-cash-localstack.nautible-app-ms.svc.cluster.local:4566"),
 		Credentials: credentials.NewStaticCredentials("test-key", "test-secret", ""),
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	db := dynamodb.New(session)
+	db := dynamo.New(sess)
+	return db, nil
+}
 
-	// keyCond := expression.Key("DeviceID").Equal(expression.Value(deviceID)).
-	// 	And(expression.Key("Timestamp").Between(
-	// 			expression.Value(start.Format(time.RFC3339)),
-	// 			expression.Value(end.Format(time.RFC3339))))
-	keyCond := expression.Key("PaymentNo").Equal(expression.Value(paymentNo))
-
-	// filterCond := expression.Name("DeviceType").Equal(expression.Value("Normal")).
-	// 	And(expression.Name("CreatedYear").GreaterThan(expression.Value(2018)))
-
-	// expr, err := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(filterCond).Build()
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
+// シーケンス取得
+func sequence(ctx context.Context, db *dynamo.DB) (*int, error) {
+	var counter struct {
+		Name           string
+		SequenceNumber int
+	}
+	table := db.Table("Sequence")
+	err := table.Update("Name", "Payment").Add("SequenceNumber", 1).ValueWithContext(ctx, &counter)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	return &counter.SequenceNumber, err
 
-	result, err := db.QueryWithContext(ctx, &dynamodb.QueryInput{
-		KeyConditionExpression:    expr.KeyCondition(),
-		ProjectionExpression:      expr.Projection(),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		TableName:                 aws.String("Payment"),
-	})
-	if err != nil {
-		panic(err)
-	}
-	items := []domain.PaymentItem{}
-	dynamodbattribute.UnmarshalListOfMaps(result.Items, items)
-	return items[0]
 }

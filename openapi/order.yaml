@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: nautible-app-order
+  title: nautible-app-ms-order
   version: 1.0.0-SNAPSHOT
 servers:
 - url: http://localhost:8080/

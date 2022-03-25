@@ -1,17 +1,24 @@
 apiVersion: skaffold/v2beta12
 kind: Config
 metadata:
-  name: nautible-app-payment-bff
+  name: nautible-app-ms-payment-bff
 build:
   artifacts:
-    - image: nautible-app-payment-bff
-      context: ./
-      docker:
-        dockerfile: ./Docker/Dockerfile
+    - image: nautible-app-ms-payment-bff
+      custom:
+        buildCommand: ./build.sh
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - "**/target/**"
+            - "README.md"
+            - "go.sum"
+            - "**/openapi/**"
   local:
     push: false
     useBuildkit: true
 deploy:
   kustomize:
     paths:
-      - ../../nautible-app-payment-manifest/bff/overlays/local-dev
+      - ../../nautible-app-ms-payment-manifest/bff/overlays/local-dev

@@ -1,27 +1,42 @@
 package domain
 
 import (
-	"context"
-	"net/http"
+	"fmt"
 )
 
 type PaymentService interface {
-	CreatePayment(context.Context, *http.Request)
-	GetByPaymentNo(context.Context, string) PaymentItem
+	CreatePayment(*PaymentItem)
+	GetByPaymentNo(string) (*PaymentItem, error)
 }
 
-type paymentService struct {
-	repo PaymentRepository
+type PaymentStruct struct {
+	payment *PaymentRepository
+	order   *OrderRepository
 }
 
-func NewPaymentService(repo PaymentRepository) PaymentService {
-	return &paymentService{repo}
+func NewPaymentService(payment *PaymentRepository, order *OrderRepository) PaymentService {
+	return &PaymentStruct{payment, order}
 }
 
-func (svc *paymentService) CreatePayment(ctx context.Context, req *http.Request) {
-	svc.repo.CreatePayment(ctx, req)
+// バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
+func (svc *PaymentStruct) CreatePayment(payementItem *PaymentItem) {
+	fmt.Println("CreatePaymentService")
+	var orderResponse OrderResponse
+	res, err := (*svc.payment).CreatePayment(payementItem)
+	// エラー発生
+	if err != nil {
+		orderResponse.ProcessType = string(Payment)
+		orderResponse.RequestId = res.RequestId
+		orderResponse.Status = 503
+		(*svc.order).PaymentResponse(&orderResponse)
+	}
+	// 正常応答
+	orderResponse.ProcessType = string(Payment)
+	orderResponse.RequestId = res.RequestId
+	orderResponse.Status = 201
+	(*svc.order).PaymentResponse(&orderResponse)
 }
 
-func (svc *paymentService) GetByPaymentNo(ctx context.Context, paymentNo string) PaymentItem {
-	return svc.repo.GetByPaymentNo(ctx, paymentNo)
+func (svc *PaymentStruct) GetByPaymentNo(paymentNo string) (*PaymentItem, error) {
+	return (*svc.payment).GetByPaymentNo(paymentNo)
 }

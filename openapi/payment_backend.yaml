@@ -1,6 +1,6 @@
 openapi: "3.0.2"
 info:
-  title: nautible-app-payment
+  title: nautible-app-ms-payment-backend
   version: 1.0.0-SNAPSHOT
 servers:
   - url: http://localhost:8080/
@@ -49,7 +49,7 @@ paths:
         404:
           description: not found
           content: {}
-  /payment/:
+  /payment:
     get:
       tags:
         - RestPaymentService
@@ -85,6 +85,28 @@ paths:
         404:
           description: not found
           content: {}
+    post:
+      tags:
+        - RestPaymentService
+      operationId: create
+      summary: Create Payment
+      description: Create Payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestCreatePayment"
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestPayment"
+        404:
+          description: not found
+          content: {}
     put:
       tags:
         - RestPaymentService
@@ -107,56 +129,6 @@ paths:
         404:
           description: not found
           content: {}
-  /payment/create:
-    post:
-      tags:
-        - RestPaymentService
-      operationId: create
-      summary: Create Payment for SAGA
-      description: Create Payment for SAGA
-      requestBody:
-        content:
-          "application/cloudevents+json":
-            schema:
-              type: string
-              format: byte
-      responses:
-        200:
-          description: successful operation
-          content: {}
-  /payment/rejectCreate:
-    post:
-      tags:
-        - RestPaymentService
-      operationId: rejectCreate
-      summary: Reject Create Payment for SAGA
-      description: Reject Create Payment for SAGA
-      requestBody:
-        content:
-          "application/cloudevents+json":
-            schema:
-              type: string
-              format: byte
-      responses:
-        200:
-          description: successful operation
-          content: {}
-  /dapr/subscribe:
-    get:
-      tags:
-        - RestPaymentService
-      operationId: daprSubscribe
-      summary: daprSubscribe
-      description: daprSubscribe
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DaprSubscribe'
 components:
   schemas:
     RestUpdatePayment:
@@ -223,18 +195,12 @@ components:
         paymentType:
           type: string
           example: "01"
-    RestRejectCreatePayment:
-      type: object
-      required:
-        - requestId
-      properties:
-        requestId:
-          description: 処理要求を一意に表すリクエストId。
-          type: string
-          example: O0000000001
     RestPayment:
       type: object
       properties:
+        requestId:
+          type: string
+          example: "O0000000001"
         paymentNo:
           type: string
           example: "1111-2222-3333-4444"
@@ -261,19 +227,3 @@ components:
         orderStatus:
           type: string
           example: "01"
-    DaprSubscribe:
-      type: object
-      properties:
-        pubsubname:
-          type: string
-          description: pubsub
-          example: pubsub
-        topic:
-          type: string
-          description: topic
-          example: topic
-        route:
-          type: string
-          description: route
-          example: /create
-

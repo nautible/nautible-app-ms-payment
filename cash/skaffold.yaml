@@ -1,17 +1,24 @@
 apiVersion: skaffold/v2beta12
 kind: Config
 metadata:
-  name: nautible-app-payment-cash
+  name: nautible-app-ms-payment-cash
 build:
   artifacts:
-    - image: nautible-app-payment-cash
-      context: ./
-      docker:
-        dockerfile: ./Docker/Dockerfile
+    - image: nautible-app-ms-payment-cash
+      custom:
+        buildCommand: ./build.sh
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - "**/target/**"
+            - "README.md"
+            - "go.sum"
+            - "**/openapi/**"
   local:
     push: false
     useBuildkit: true
 deploy:
   kustomize:
     paths:
-      - ../../nautible-app-payment-manifest/cash/overlays/local-dev
+      - ../../nautible-app-ms-payment-manifest/cash/overlays/local-dev
