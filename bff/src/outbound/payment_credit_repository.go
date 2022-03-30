@@ -7,20 +7,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	outbound "payment-bff/generate/client/payment"
 	domain "payment-bff/src/domain"
 )
 
-type PaymentRepository struct{}
+type PaymentCreditRepository struct{}
 
-func NewPaymentRepository() domain.PaymentRepository {
-	paymentRepository := PaymentRepository{}
-	return &paymentRepository
+func NewPaymentCreditRepository() domain.PaymentRepository {
+	paymentCreditRepository := PaymentCreditRepository{}
+	return &paymentCreditRepository
 }
 
 // 決済登録を行うリポジトリ
-func (p *PaymentRepository) CreatePayment(request *domain.PaymentItem) (*domain.PaymentItem, error) {
-	c, err := outbound.NewClient("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
+func (p *PaymentCreditRepository) CreatePayment(request *domain.PaymentItem) (*domain.PaymentItem, error) {
+	c, err := outbound.NewClient("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +44,7 @@ func (p *PaymentRepository) CreatePayment(request *domain.PaymentItem) (*domain.
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode == 200 || res.StatusCode == 201 {
+	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
 		buf := new(bytes.Buffer)
 		io.Copy(buf, res.Body)
 		var result domain.PaymentItem
@@ -54,9 +55,9 @@ func (p *PaymentRepository) CreatePayment(request *domain.PaymentItem) (*domain.
 }
 
 // 決済データ取得を行うリポジトリ
-func (p *PaymentRepository) GetByPaymentNo(paymentNo string) (*domain.PaymentItem, error) {
+func (p *PaymentCreditRepository) GetByPaymentNo(paymentNo string) (*domain.PaymentItem, error) {
 	fmt.Println("Rest GetByPaymentNo")
-	c, err := outbound.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
+	c, err := outbound.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
 		return &domain.PaymentItem{}, err
 	}

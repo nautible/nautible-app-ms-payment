@@ -52,9 +52,8 @@ func RejectCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// /create受信ハンドラ
 func postCreate(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("postCreate")
-	w.WriteHeader(http.StatusCreated)
 	body := r.Body
 	defer body.Close()
 
@@ -73,27 +72,32 @@ func postCreate(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(dec, &restCreatePayment)
 
 	// 決済サービス
-	payment := outbound.NewPaymentRepository()
-	order := outbound.NewOrderRepository()
-	service := domain.NewPaymentService(&payment, &order)
 	var paymentItem domain.PaymentItem
 	paymentItem.RequestId = restCreatePayment.RequestId
 	paymentItem.OrderNo = restCreatePayment.OrderNo
 	paymentItem.PaymentType = restCreatePayment.PaymentType
 	paymentItem.OrderDate = restCreatePayment.OrderDate
 	paymentItem.TotalPrice = restCreatePayment.TotalPrice
-	service.CreatePayment(&paymentItem)
-	// result, err := service.GetByPaymentNo("C000000001")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(result.OrderDate)
-	// result2, err := service.GetByPaymentNo("C000000002")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(result2.OrderDate)
+	paymentItem.CustomerId = restCreatePayment.CustomerId
+	orderRepository := outbound.NewOrderRepository()
+	if restCreatePayment.PaymentType == string(domain.Cash) {
+		execService(outbound.NewPaymentCashRepository(), orderRepository, paymentItem)
+
+	} else if restCreatePayment.PaymentType == string(domain.Credit) {
+		execService(outbound.NewPaymentCreditRepository(), orderRepository, paymentItem)
+	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func execService(paymentRepository domain.PaymentRepository, orderRepository domain.OrderRepository, paymentItem domain.PaymentItem) {
+	service := domain.NewPaymentService(&paymentRepository, &orderRepository)
+	service.CreatePayment(&paymentItem)
+	// 動作確認
+	result, err := service.GetByPaymentNo("C000000001")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(result.OrderDate)
 }
 
 func postRejectCreate(w http.ResponseWriter, r *http.Request) {

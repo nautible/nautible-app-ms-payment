@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"payment-cash/generate/server"
-	"payment-cash/src/inbound"
+	"payment-credit/generate/server"
+	"payment-credit/src/inbound"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"

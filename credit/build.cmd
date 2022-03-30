@@ -1,0 +1,1 @@
+cmd /c "docker build -t %IMAGE% -f ./Docker/Dockerfile ."
