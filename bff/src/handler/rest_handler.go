@@ -71,7 +71,7 @@ func postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Unmarshal(dec, &restCreatePayment)
 
-	// 決済サービス
+	// 入力データの取得
 	var paymentItem domain.PaymentItem
 	paymentItem.RequestId = restCreatePayment.RequestId
 	paymentItem.OrderNo = restCreatePayment.OrderNo
@@ -79,25 +79,15 @@ func postCreate(w http.ResponseWriter, r *http.Request) {
 	paymentItem.OrderDate = restCreatePayment.OrderDate
 	paymentItem.TotalPrice = restCreatePayment.TotalPrice
 	paymentItem.CustomerId = restCreatePayment.CustomerId
+
+	// 決済サービス呼び出し
+	cashRepository := outbound.NewPaymentCashRepository()
+	creditRepository := outbound.NewPaymentCreditRepository()
 	orderRepository := outbound.NewOrderRepository()
-	if restCreatePayment.PaymentType == string(domain.Cash) {
-		execService(outbound.NewPaymentCashRepository(), orderRepository, paymentItem)
-
-	} else if restCreatePayment.PaymentType == string(domain.Credit) {
-		execService(outbound.NewPaymentCreditRepository(), orderRepository, paymentItem)
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-func execService(paymentRepository domain.PaymentRepository, orderRepository domain.OrderRepository, paymentItem domain.PaymentItem) {
-	service := domain.NewPaymentService(&paymentRepository, &orderRepository)
+	service := domain.NewPaymentService(&cashRepository, &creditRepository, &orderRepository)
 	service.CreatePayment(&paymentItem)
-	// 動作確認
-	result, err := service.GetByPaymentNo("C000000001")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(result.OrderDate)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func postRejectCreate(w http.ResponseWriter, r *http.Request) {

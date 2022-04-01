@@ -1,12 +1,12 @@
-package inbound
+package handler
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	server "payment-cash/generate/server"
-	domain "payment-cash/src/domain"
-	outbound "payment-cash/src/outbound"
+	server "payment-credit/generate/server"
+	domain "payment-credit/src/domain"
+	outbound "payment-credit/src/outbound"
 	"strings"
 	"sync"
 )

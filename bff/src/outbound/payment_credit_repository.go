@@ -14,7 +14,7 @@ import (
 
 type PaymentCreditRepository struct{}
 
-func NewPaymentCreditRepository() domain.PaymentRepository {
+func NewPaymentCreditRepository() domain.CreditRepository {
 	paymentCreditRepository := PaymentCreditRepository{}
 	return &paymentCreditRepository
 }

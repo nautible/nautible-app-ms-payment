@@ -24,16 +24,17 @@ type ErrorDetail struct {
 
 type PaymentService interface {
 	CreatePayment(*PaymentItem)
-	GetByPaymentNo(string) (*PaymentItem, error)
+	GetByPaymentNo(string, string) (*PaymentItem, error)
 }
 
 type PaymentStruct struct {
-	payment *PaymentRepository
-	order   *OrderRepository
+	cash   *CashRepository
+	credit *CreditRepository
+	order  *OrderRepository
 }
 
-func NewPaymentService(payment *PaymentRepository, order *OrderRepository) PaymentService {
-	return &PaymentStruct{payment, order}
+func NewPaymentService(cash *CashRepository, credit *CreditRepository, order *OrderRepository) PaymentService {
+	return &PaymentStruct{cash, credit, order}
 }
 
 // バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
@@ -52,8 +53,22 @@ func (svc *PaymentStruct) CreatePayment(payementItem *PaymentItem) {
 		return
 	}
 
-	//
-	res, err := (*svc.payment).CreatePayment(payementItem)
+	// バックエンドの決済処理を呼び出す
+	var res *PaymentItem
+	var err error
+	if payementItem.PaymentType == string(Cash) {
+		res, err = (*svc.cash).CreatePayment(payementItem)
+	} else if payementItem.PaymentType == string(Credit) {
+		res, err = (*svc.credit).CreatePayment(payementItem)
+	} else {
+		// 支払い区分不正
+		orderResponse.ProcessType = string(Payment)
+		orderResponse.RequestId = res.RequestId
+		orderResponse.Status = http.StatusBadRequest
+		orderResponse.Message = messsageFormat("支払い区分が不正です paymentType : " + payementItem.PaymentType)
+		(*svc.order).PaymentResponse(&orderResponse)
+		return
+	}
 	// エラー発生
 	if err != nil {
 		orderResponse.ProcessType = string(Payment)
@@ -71,8 +86,13 @@ func (svc *PaymentStruct) CreatePayment(payementItem *PaymentItem) {
 	(*svc.order).PaymentResponse(&orderResponse)
 }
 
-func (svc *PaymentStruct) GetByPaymentNo(paymentNo string) (*PaymentItem, error) {
-	return (*svc.payment).GetByPaymentNo(paymentNo)
+func (svc *PaymentStruct) GetByPaymentNo(paymentType string, paymentNo string) (*PaymentItem, error) {
+	if paymentType == string(Cash) {
+		return (*svc.cash).GetByPaymentNo(paymentNo)
+	} else if paymentType == string(Credit) {
+		return (*svc.credit).GetByPaymentNo(paymentNo)
+	}
+	return nil, nil
 }
 
 func validate(paymentItem *PaymentItem) string {

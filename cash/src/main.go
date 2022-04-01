@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 	"payment-cash/generate/server"
-	"payment-cash/src/inbound"
+	"payment-cash/src/handler"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
@@ -25,7 +25,7 @@ func main() {
 
 	swagger.Servers = nil
 
-	new_payment := inbound.NewPayment()
+	new_payment := handler.NewPayment()
 
 	r := chi.NewRouter()
 

@@ -13,7 +13,7 @@ import (
 
 type PaymentCashRepository struct{}
 
-func NewPaymentCashRepository() domain.PaymentRepository {
+func NewPaymentCashRepository() domain.CashRepository {
 	paymentCashRepository := PaymentCashRepository{}
 	return &paymentCashRepository
 }
