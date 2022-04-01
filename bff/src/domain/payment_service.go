@@ -72,7 +72,7 @@ func (svc *PaymentStruct) CreatePayment(payementItem *PaymentItem) {
 	// エラー発生
 	if err != nil {
 		orderResponse.ProcessType = string(Payment)
-		orderResponse.RequestId = res.RequestId
+		orderResponse.RequestId = payementItem.RequestId
 		orderResponse.Status = http.StatusInternalServerError
 		orderResponse.Message = messsageFormat(err.Error())
 		(*svc.order).PaymentResponse(&orderResponse)
