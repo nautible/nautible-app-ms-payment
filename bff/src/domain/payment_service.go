@@ -23,8 +23,9 @@ type ErrorDetail struct {
 }
 
 type PaymentService interface {
-	CreatePayment(*PaymentItem)
-	GetByPaymentNo(string, string) (*PaymentItem, error)
+	CreatePayment(*Payment)
+	GetByOrderNo(string, string) (*Payment, error)
+	DeleteByOrderNo(string, string) error
 }
 
 type PaymentStruct struct {
@@ -38,14 +39,14 @@ func NewPaymentService(cash *CashRepository, credit *CreditRepository, order *Or
 }
 
 // バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
-func (svc *PaymentStruct) CreatePayment(payementItem *PaymentItem) {
+func (svc *PaymentStruct) CreatePayment(payement *Payment) {
 	fmt.Println("CreatePaymentService")
 	// バリデート
 	var orderResponse OrderResponse
-	result := validate(payementItem)
+	result := validate(payement)
 	if result != "" {
-		orderResponse.ProcessType = string(Payment)
-		orderResponse.RequestId = payementItem.RequestId
+		orderResponse.ProcessType = string(TypePayment)
+		orderResponse.RequestId = payement.RequestId
 		orderResponse.Message = result
 		orderResponse.Status = http.StatusBadRequest
 		(*svc.order).PaymentResponse(&orderResponse)
@@ -54,48 +55,57 @@ func (svc *PaymentStruct) CreatePayment(payementItem *PaymentItem) {
 	}
 
 	// バックエンドの決済処理を呼び出す
-	var res *PaymentItem
+	var res *Payment
 	var err error
-	if payementItem.PaymentType == string(Cash) {
-		res, err = (*svc.cash).CreatePayment(payementItem)
-	} else if payementItem.PaymentType == string(Credit) {
-		res, err = (*svc.credit).CreatePayment(payementItem)
+	if payement.PaymentType == string(TypeCash) {
+		res, err = (*svc.cash).CreatePayment(payement)
+	} else if payement.PaymentType == string(TypeCredit) {
+		res, err = (*svc.credit).CreatePayment(payement)
 	} else {
 		// 支払い区分不正
-		orderResponse.ProcessType = string(Payment)
+		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = res.RequestId
 		orderResponse.Status = http.StatusBadRequest
-		orderResponse.Message = messsageFormat("支払い区分が不正です paymentType : " + payementItem.PaymentType)
+		orderResponse.Message = messsageFormat("支払い区分が不正です paymentType : " + payement.PaymentType)
 		(*svc.order).PaymentResponse(&orderResponse)
 		return
 	}
 	// エラー発生
 	if err != nil {
-		orderResponse.ProcessType = string(Payment)
-		orderResponse.RequestId = payementItem.RequestId
+		orderResponse.ProcessType = string(TypePayment)
+		orderResponse.RequestId = payement.RequestId
 		orderResponse.Status = http.StatusInternalServerError
 		orderResponse.Message = messsageFormat(err.Error())
 		(*svc.order).PaymentResponse(&orderResponse)
 		return
 	}
 	// 正常応答
-	orderResponse.ProcessType = string(Payment)
+	orderResponse.ProcessType = string(TypePayment)
 	orderResponse.RequestId = res.RequestId
 	orderResponse.Status = http.StatusCreated
 	orderResponse.Message = messsageFormat("Success")
 	(*svc.order).PaymentResponse(&orderResponse)
 }
 
-func (svc *PaymentStruct) GetByPaymentNo(paymentType string, paymentNo string) (*PaymentItem, error) {
-	if paymentType == string(Cash) {
-		return (*svc.cash).GetByPaymentNo(paymentNo)
-	} else if paymentType == string(Credit) {
-		return (*svc.credit).GetByPaymentNo(paymentNo)
+func (svc *PaymentStruct) GetByOrderNo(paymentType string, orderNo string) (*Payment, error) {
+	if paymentType == string(TypeCash) {
+		return (*svc.cash).GetByOrderNo(orderNo)
+	} else if paymentType == string(TypeCredit) {
+		return (*svc.credit).GetByOrderNo(orderNo)
 	}
 	return nil, nil
 }
 
-func validate(paymentItem *PaymentItem) string {
+func (svc *PaymentStruct) DeleteByOrderNo(paymentType string, orderNo string) error {
+	if paymentType == string(TypeCash) {
+		return (*svc.cash).DeleteByOrderNo(orderNo)
+	} else if paymentType == string(TypeCredit) {
+		return (*svc.credit).DeleteByOrderNo(orderNo)
+	}
+	return nil
+}
+
+func validate(paymentItem *Payment) string {
 	// validator doc https://github.com/go-playground/validator/tree/master
 	validate := validator.New()
 	// jsonタグ名で応答できるように設定する

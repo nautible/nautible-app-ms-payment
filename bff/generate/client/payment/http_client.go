@@ -104,10 +104,10 @@ type ClientInterface interface {
 	Update(ctx context.Context, body UpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Delete request
-	Delete(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	Delete(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetByPaymentNo request
-	GetByPaymentNo(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetByOrderNo request
+	GetByOrderNo(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) Find(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -170,8 +170,8 @@ func (c *Client) Update(ctx context.Context, body UpdateJSONRequestBody, reqEdit
 	return c.Client.Do(req)
 }
 
-func (c *Client) Delete(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteRequest(c.Server, paymentNo)
+func (c *Client) Delete(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteRequest(c.Server, orderNo)
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +182,8 @@ func (c *Client) Delete(ctx context.Context, paymentNo string, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetByPaymentNo(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetByPaymentNoRequest(c.Server, paymentNo)
+func (c *Client) GetByOrderNo(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetByOrderNoRequest(c.Server, orderNo)
 	if err != nil {
 		return nil, err
 	}
@@ -354,12 +354,12 @@ func NewUpdateRequestWithBody(server string, contentType string, body io.Reader)
 }
 
 // NewDeleteRequest generates requests for Delete
-func NewDeleteRequest(server string, paymentNo string) (*http.Request, error) {
+func NewDeleteRequest(server string, orderNo string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "paymentNo", runtime.ParamLocationPath, paymentNo)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orderNo", runtime.ParamLocationPath, orderNo)
 	if err != nil {
 		return nil, err
 	}
@@ -387,13 +387,13 @@ func NewDeleteRequest(server string, paymentNo string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetByPaymentNoRequest generates requests for GetByPaymentNo
-func NewGetByPaymentNoRequest(server string, paymentNo string) (*http.Request, error) {
+// NewGetByOrderNoRequest generates requests for GetByOrderNo
+func NewGetByOrderNoRequest(server string, orderNo string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "paymentNo", runtime.ParamLocationPath, paymentNo)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orderNo", runtime.ParamLocationPath, orderNo)
 	if err != nil {
 		return nil, err
 	}
@@ -478,10 +478,10 @@ type ClientWithResponsesInterface interface {
 	UpdateWithResponse(ctx context.Context, body UpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResponse, error)
 
 	// Delete request
-	DeleteWithResponse(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error)
+	DeleteWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error)
 
-	// GetByPaymentNo request
-	GetByPaymentNoWithResponse(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*GetByPaymentNoResponse, error)
+	// GetByOrderNo request
+	GetByOrderNoWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*GetByOrderNoResponse, error)
 }
 
 type FindResponse struct {
@@ -571,14 +571,14 @@ func (r DeleteResponse) StatusCode() int {
 	return 0
 }
 
-type GetByPaymentNoResponse struct {
+type GetByOrderNoResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RestPayment
 }
 
 // Status returns HTTPResponse.Status
-func (r GetByPaymentNoResponse) Status() string {
+func (r GetByOrderNoResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -586,7 +586,7 @@ func (r GetByPaymentNoResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetByPaymentNoResponse) StatusCode() int {
+func (r GetByOrderNoResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -637,21 +637,21 @@ func (c *ClientWithResponses) UpdateWithResponse(ctx context.Context, body Updat
 }
 
 // DeleteWithResponse request returning *DeleteResponse
-func (c *ClientWithResponses) DeleteWithResponse(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error) {
-	rsp, err := c.Delete(ctx, paymentNo, reqEditors...)
+func (c *ClientWithResponses) DeleteWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error) {
+	rsp, err := c.Delete(ctx, orderNo, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseDeleteResponse(rsp)
 }
 
-// GetByPaymentNoWithResponse request returning *GetByPaymentNoResponse
-func (c *ClientWithResponses) GetByPaymentNoWithResponse(ctx context.Context, paymentNo string, reqEditors ...RequestEditorFn) (*GetByPaymentNoResponse, error) {
-	rsp, err := c.GetByPaymentNo(ctx, paymentNo, reqEditors...)
+// GetByOrderNoWithResponse request returning *GetByOrderNoResponse
+func (c *ClientWithResponses) GetByOrderNoWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*GetByOrderNoResponse, error) {
+	rsp, err := c.GetByOrderNo(ctx, orderNo, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetByPaymentNoResponse(rsp)
+	return ParseGetByOrderNoResponse(rsp)
 }
 
 // ParseFindResponse parses an HTTP response from a FindWithResponse call
@@ -748,15 +748,15 @@ func ParseDeleteResponse(rsp *http.Response) (*DeleteResponse, error) {
 	return response, nil
 }
 
-// ParseGetByPaymentNoResponse parses an HTTP response from a GetByPaymentNoWithResponse call
-func ParseGetByPaymentNoResponse(rsp *http.Response) (*GetByPaymentNoResponse, error) {
+// ParseGetByOrderNoResponse parses an HTTP response from a GetByOrderNoWithResponse call
+func ParseGetByOrderNoResponse(rsp *http.Response) (*GetByOrderNoResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetByPaymentNoResponse{
+	response := &GetByOrderNoResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

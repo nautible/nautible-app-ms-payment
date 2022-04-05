@@ -1,7 +1,7 @@
 package domain
 
 // Paymentのモデル定義
-type PaymentItem struct {
+type Payment struct {
 	RequestId   string `json:"requestId" validate:"required,len=11"`
 	PaymentNo   string `json:"paymentNo"`
 	PaymentType string `json:"paymentType" validate:"required"`

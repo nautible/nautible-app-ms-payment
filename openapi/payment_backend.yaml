@@ -5,17 +5,17 @@ info:
 servers:
   - url: http://localhost:8080/
 paths:
-  /payment/{paymentNo}:
+  /payment/{orderNo}:
     get:
       tags:
         - RestPaymentService
-      operationId: getByPaymentNo
-      summary: Find order by PaymentNo
+      operationId: getByOrderNo
+      summary: Find order by orderNo
       description: Returns a single order
       parameters:
-        - name: paymentNo
+        - name: orderNo
           in: path
-          description: PaymentNo
+          description: orderNo
           required: true
           schema:
             type: string
@@ -33,12 +33,12 @@ paths:
       tags:
         - RestPaymentService
       operationId: delete
-      summary: Delete payment by paymentNo
+      summary: Delete payment by orderNo
       description: Delete a payment
       parameters:
-        - name: paymentNo
+        - name: orderNo
           in: path
-          description: paymentNo
+          description: orderNo
           required: true
           schema:
             type: string

@@ -19,7 +19,7 @@ func NewPaymentCashRepository() domain.CashRepository {
 }
 
 // 決済登録を行うリポジトリ
-func (p *PaymentCashRepository) CreatePayment(request *domain.PaymentItem) (*domain.PaymentItem, error) {
+func (p *PaymentCashRepository) CreatePayment(request *domain.Payment) (*domain.Payment, error) {
 	c, err := outbound.NewClient("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
 	if err != nil {
 		panic(err)
@@ -46,7 +46,7 @@ func (p *PaymentCashRepository) CreatePayment(request *domain.PaymentItem) (*dom
 	if res.StatusCode == 200 || res.StatusCode == 201 {
 		buf := new(bytes.Buffer)
 		io.Copy(buf, res.Body)
-		var result domain.PaymentItem
+		var result domain.Payment
 		json.Unmarshal(buf.Bytes(), &result)
 		return &result, nil
 	}
@@ -54,19 +54,36 @@ func (p *PaymentCashRepository) CreatePayment(request *domain.PaymentItem) (*dom
 }
 
 // 決済データ取得を行うリポジトリ
-func (p *PaymentCashRepository) GetByPaymentNo(paymentNo string) (*domain.PaymentItem, error) {
-	fmt.Println("Rest GetByPaymentNo")
+func (p *PaymentCashRepository) GetByOrderNo(orderNo string) (*domain.Payment, error) {
+	fmt.Println("Rest GetByOrderNo")
 	c, err := outbound.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
 	if err != nil {
-		return &domain.PaymentItem{}, err
+		return &domain.Payment{}, err
 	}
 
 	// http.Response として返却
-	res, err := c.GetByPaymentNoWithResponse(context.Background(), paymentNo)
+	res, err := c.GetByOrderNoWithResponse(context.Background(), orderNo)
 	if err != nil {
-		return &domain.PaymentItem{}, err
+		return &domain.Payment{}, err
 	}
-	var model domain.PaymentItem
+	var model domain.Payment
 	json.NewDecoder(bytes.NewReader(res.Body)).Decode(&model)
 	return &model, err
+}
+
+// 決済データの取り消し
+func (p *PaymentCashRepository) DeleteByOrderNo(orderNo string) error {
+	fmt.Println("Rest DeleteByOrderNo")
+	c, err := outbound.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
+	if err != nil {
+		return err
+	}
+
+	// http.Response として返却
+	res, err := c.Delete(context.Background(), orderNo)
+	if err != nil {
+		return err
+	}
+	fmt.Println(res.StatusCode)
+	return nil
 }

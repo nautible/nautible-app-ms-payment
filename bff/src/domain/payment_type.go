@@ -3,6 +3,6 @@ package domain
 type PaymentType string
 
 const (
-	Credit = PaymentType("01")
-	Cash   = PaymentType("02")
+	TypeCredit = PaymentType("01")
+	TypeCash   = PaymentType("02")
 )

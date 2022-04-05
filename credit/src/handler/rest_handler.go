@@ -37,7 +37,7 @@ func (p *Payment) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	repo := outbound.NewPaymentDB()
 	svc := domain.NewPaymentService(repo)
-	var model domain.PaymentItem
+	var model domain.Payment
 	json.NewDecoder(r.Body).Decode(&model)
 	res, err := svc.CreatePayment(r.Context(), &model)
 	if err != nil {
@@ -70,19 +70,26 @@ func (p *Payment) Update(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string("Update"))
 }
 
-// Delete payment by paymentNo
-// (DELETE /payment/{paymentNo})
-func (p *Payment) Delete(w http.ResponseWriter, r *http.Request, paymentNo string) {
+// Delete payment by orderNo
+// (DELETE /payment/{orderNo})
+func (p *Payment) Delete(w http.ResponseWriter, r *http.Request, orderNo string) {
 	id := strings.TrimPrefix(r.URL.Path, "/payment/")
 	fmt.Fprint(w, string("Delete : "+id))
+
+	repo := outbound.NewPaymentDB()
+	svc := domain.NewPaymentService(repo)
+	err := svc.DeletePayment(r.Context(), id)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
-// Find order by PaymentNo
-// (GET /payment/{paymentNo})
-func (p *Payment) GetByPaymentNo(w http.ResponseWriter, r *http.Request, paymentNo string) {
+// Find order by OrderNo
+// (GET /payment/{orderNo})
+func (p *Payment) GetByOrderNo(w http.ResponseWriter, r *http.Request, orderNo string) {
 	id := strings.TrimPrefix(r.URL.Path, "/payment/")
-
-	// TODO バリデーション
 
 	repo := outbound.NewPaymentDB()
 	svc := domain.NewPaymentService(repo)

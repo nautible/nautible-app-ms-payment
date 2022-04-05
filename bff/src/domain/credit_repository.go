@@ -2,6 +2,7 @@ package domain
 
 // 後方サービスにリクエストするリポジトリインターフェース
 type CreditRepository interface {
-	CreatePayment(*PaymentItem) (*PaymentItem, error)
-	GetByPaymentNo(string) (*PaymentItem, error)
+	CreatePayment(*Payment) (*Payment, error)
+	GetByOrderNo(string) (*Payment, error)
+	DeleteByOrderNo(string) error
 }

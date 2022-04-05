@@ -72,7 +72,7 @@ func postCreate(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(dec, &restCreatePayment)
 
 	// 入力データの取得
-	var paymentItem domain.PaymentItem
+	var paymentItem domain.Payment
 	paymentItem.RequestId = restCreatePayment.RequestId
 	paymentItem.OrderNo = restCreatePayment.OrderNo
 	paymentItem.PaymentType = restCreatePayment.PaymentType
@@ -92,5 +92,29 @@ func postCreate(w http.ResponseWriter, r *http.Request) {
 
 func postRejectCreate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "Hello, RejectCreateHandler")
+	body := r.Body
+	defer body.Close()
+
+	// CloudEventsで受け取ったバイナリデータ（Base64）を構造体にマッピング
+	buf := new(bytes.Buffer)
+	io.Copy(buf, body)
+	var cloudEvents CloudEvents
+	var restCancelPayment server.RestCancelPayment
+	json.Unmarshal(buf.Bytes(), &cloudEvents)
+	dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	json.Unmarshal(dec, &restCancelPayment)
+
+	// 決済削除サービス呼び出し
+	cashRepository := outbound.NewPaymentCashRepository()
+	creditRepository := outbound.NewPaymentCreditRepository()
+	orderRepository := outbound.NewOrderRepository()
+	service := domain.NewPaymentService(&cashRepository, &creditRepository, &orderRepository)
+	service.DeleteByOrderNo(restCancelPayment.PaymentType, restCancelPayment.OrderNo)
+
+	w.WriteHeader(http.StatusOK)
 }
