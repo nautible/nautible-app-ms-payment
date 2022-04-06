@@ -11,21 +11,21 @@ type PaymentService interface {
 }
 
 type paymentService struct {
-	repo PaymentRepository
+	repo DynamoDbRepository
 }
 
-func NewPaymentService(repo PaymentRepository) PaymentService {
+func NewPaymentService(repo DynamoDbRepository) PaymentService {
 	return &paymentService{repo}
 }
 
 func (svc *paymentService) CreatePayment(ctx context.Context, payment *Payment) (*Payment, error) {
-	return svc.repo.PutItem(ctx, payment)
+	return svc.repo.PutPaymentItem(ctx, payment)
 }
 
 func (svc *paymentService) GetPayment(ctx context.Context, orderNo string) (*Payment, error) {
-	return svc.repo.GetItem(ctx, orderNo)
+	return svc.repo.GetPaymentItem(ctx, orderNo)
 }
 
 func (svc *paymentService) DeletePayment(ctx context.Context, orderNo string) error {
-	return svc.repo.DeleteItem(ctx, orderNo)
+	return svc.repo.DeletePaymentItem(ctx, orderNo)
 }

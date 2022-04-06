@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -23,84 +24,76 @@ type ErrorDetail struct {
 }
 
 type PaymentService interface {
-	CreatePayment(*Payment)
-	GetByOrderNo(string, string) (*Payment, error)
-	DeleteByOrderNo(string, string) error
+	CreatePayment(context.Context, *Payment)
+	GetByOrderNo(context.Context, string, string) (*Payment, error)
+	DeleteByOrderNo(context.Context, string, string) error
 }
 
 type PaymentStruct struct {
-	cash   *CashRepository
-	credit *CreditRepository
-	order  *OrderRepository
+	history *DynamoDbRepository
+	cash    *CashRepository
+	credit  *CreditRepository
+	order   *OrderRepository
 }
 
-func NewPaymentService(cash *CashRepository, credit *CreditRepository, order *OrderRepository) PaymentService {
-	return &PaymentStruct{cash, credit, order}
+func NewPaymentService(history *DynamoDbRepository, cash *CashRepository, credit *CreditRepository, order *OrderRepository) PaymentService {
+	return &PaymentStruct{history, cash, credit, order}
 }
 
 // バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
-func (svc *PaymentStruct) CreatePayment(payement *Payment) {
+func (svc *PaymentStruct) CreatePayment(ctx context.Context, payment *Payment) {
 	fmt.Println("CreatePaymentService")
 	// バリデート
 	var orderResponse OrderResponse
-	result := validate(payement)
+	result := validate(payment)
 	if result != "" {
 		orderResponse.ProcessType = string(TypePayment)
-		orderResponse.RequestId = payement.RequestId
+		orderResponse.RequestId = payment.RequestId
 		orderResponse.Message = result
 		orderResponse.Status = http.StatusBadRequest
-		(*svc.order).PaymentResponse(&orderResponse)
+		(*svc.order).PaymentResponse(ctx, &orderResponse)
 		fmt.Println(orderResponse.Message)
 		return
 	}
 
+	// 冪等性担保 履歴テーブルへの登録
+	if err := (*svc.history).PutPaymentHistory(ctx, payment); err != nil {
+		orderResponse.ProcessType = string(TypePayment)
+		orderResponse.RequestId = payment.RequestId
+		if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
+			// エラー内容が登録済みの場合は正常応答
+			orderResponse.Status = http.StatusOK
+			orderResponse.Message = messsageFormat("Success")
+		} else {
+			// それ以外のエラーは異常応答
+			orderResponse.Status = http.StatusInternalServerError
+			orderResponse.Message = messsageFormat(err.Error())
+		}
+		(*svc.order).PaymentResponse(ctx, &orderResponse)
+		return
+	}
+
 	// バックエンドの決済処理を呼び出す
-	var res *Payment
-	var err error
-	if payement.PaymentType == string(TypeCash) {
-		res, err = (*svc.cash).CreatePayment(payement)
-	} else if payement.PaymentType == string(TypeCredit) {
-		res, err = (*svc.credit).CreatePayment(payement)
-	} else {
-		// 支払い区分不正
-		orderResponse.ProcessType = string(TypePayment)
-		orderResponse.RequestId = res.RequestId
-		orderResponse.Status = http.StatusBadRequest
-		orderResponse.Message = messsageFormat("支払い区分が不正です paymentType : " + payement.PaymentType)
-		(*svc.order).PaymentResponse(&orderResponse)
-		return
-	}
-	// エラー発生
-	if err != nil {
-		orderResponse.ProcessType = string(TypePayment)
-		orderResponse.RequestId = payement.RequestId
-		orderResponse.Status = http.StatusInternalServerError
-		orderResponse.Message = messsageFormat(err.Error())
-		(*svc.order).PaymentResponse(&orderResponse)
-		return
-	}
-	// 正常応答
-	orderResponse.ProcessType = string(TypePayment)
-	orderResponse.RequestId = res.RequestId
-	orderResponse.Status = http.StatusCreated
-	orderResponse.Message = messsageFormat("Success")
-	(*svc.order).PaymentResponse(&orderResponse)
+	orderResponse = *createPayment(ctx, svc, payment)
+
+	// レスポンスをOrderに送信
+	(*svc.order).PaymentResponse(ctx, &orderResponse)
 }
 
-func (svc *PaymentStruct) GetByOrderNo(paymentType string, orderNo string) (*Payment, error) {
+func (svc *PaymentStruct) GetByOrderNo(ctx context.Context, paymentType string, orderNo string) (*Payment, error) {
 	if paymentType == string(TypeCash) {
-		return (*svc.cash).GetByOrderNo(orderNo)
+		return (*svc.cash).GetByOrderNo(ctx, orderNo)
 	} else if paymentType == string(TypeCredit) {
-		return (*svc.credit).GetByOrderNo(orderNo)
+		return (*svc.credit).GetByOrderNo(ctx, orderNo)
 	}
 	return nil, nil
 }
 
-func (svc *PaymentStruct) DeleteByOrderNo(paymentType string, orderNo string) error {
+func (svc *PaymentStruct) DeleteByOrderNo(ctx context.Context, paymentType string, orderNo string) error {
 	if paymentType == string(TypeCash) {
-		return (*svc.cash).DeleteByOrderNo(orderNo)
+		return (*svc.cash).DeleteByOrderNo(ctx, orderNo)
 	} else if paymentType == string(TypeCredit) {
-		return (*svc.credit).DeleteByOrderNo(orderNo)
+		return (*svc.credit).DeleteByOrderNo(ctx, orderNo)
 	}
 	return nil
 }
@@ -138,6 +131,38 @@ func validate(paymentItem *Payment) string {
 		return result
 	}
 	return ""
+}
+
+func createPayment(ctx context.Context, svc *PaymentStruct, payment *Payment) *OrderResponse {
+	var orderResponse OrderResponse
+	var res *Payment
+	var err error
+	if payment.PaymentType == string(TypeCash) {
+		res, err = (*svc.cash).CreatePayment(ctx, payment)
+	} else if payment.PaymentType == string(TypeCredit) {
+		res, err = (*svc.credit).CreatePayment(ctx, payment)
+	} else {
+		// 支払い区分不正
+		orderResponse.ProcessType = string(TypePayment)
+		orderResponse.RequestId = res.RequestId
+		orderResponse.Status = http.StatusBadRequest
+		orderResponse.Message = messsageFormat("支払い区分が不正です paymentType : " + payment.PaymentType)
+		return &orderResponse
+	}
+	// エラー発生
+	if err != nil {
+		orderResponse.ProcessType = string(TypePayment)
+		orderResponse.RequestId = payment.RequestId
+		orderResponse.Status = http.StatusInternalServerError
+		orderResponse.Message = messsageFormat(err.Error())
+		return &orderResponse
+	}
+	// 正常応答
+	orderResponse.ProcessType = string(TypePayment)
+	orderResponse.RequestId = res.RequestId
+	orderResponse.Status = http.StatusOK
+	orderResponse.Message = messsageFormat("Success")
+	return &orderResponse
 }
 
 func messsageFormat(message string) string {

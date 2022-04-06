@@ -1,6 +1,8 @@
 package domain
 
+import "context"
+
 // Orderサービスにリクエストするリポジトリインターフェース
 type OrderRepository interface {
-	PaymentResponse(*OrderResponse) error
+	PaymentResponse(context.Context, *OrderResponse) error
 }

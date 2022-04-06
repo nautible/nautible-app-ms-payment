@@ -81,11 +81,12 @@ func postCreate(w http.ResponseWriter, r *http.Request) {
 	paymentItem.CustomerId = restCreatePayment.CustomerId
 
 	// 決済サービス呼び出し
+	dynamoDbRepository := outbound.NewDynamoDbRepository()
 	cashRepository := outbound.NewPaymentCashRepository()
 	creditRepository := outbound.NewPaymentCreditRepository()
 	orderRepository := outbound.NewOrderRepository()
-	service := domain.NewPaymentService(&cashRepository, &creditRepository, &orderRepository)
-	service.CreatePayment(&paymentItem)
+	service := domain.NewPaymentService(&dynamoDbRepository, &cashRepository, &creditRepository, &orderRepository)
+	service.CreatePayment(r.Context(), &paymentItem)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -110,11 +111,12 @@ func postRejectCreate(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(dec, &restCancelPayment)
 
 	// 決済削除サービス呼び出し
+	dynamoDbRepository := outbound.NewDynamoDbRepository()
 	cashRepository := outbound.NewPaymentCashRepository()
 	creditRepository := outbound.NewPaymentCreditRepository()
 	orderRepository := outbound.NewOrderRepository()
-	service := domain.NewPaymentService(&cashRepository, &creditRepository, &orderRepository)
-	service.DeleteByOrderNo(restCancelPayment.PaymentType, restCancelPayment.OrderNo)
+	service := domain.NewPaymentService(&dynamoDbRepository, &cashRepository, &creditRepository, &orderRepository)
+	service.DeleteByOrderNo(r.Context(), restCancelPayment.PaymentType, restCancelPayment.OrderNo)
 
 	w.WriteHeader(http.StatusOK)
 }

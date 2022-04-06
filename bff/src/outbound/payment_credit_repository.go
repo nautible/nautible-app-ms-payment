@@ -20,7 +20,7 @@ func NewPaymentCreditRepository() domain.CreditRepository {
 }
 
 // 決済登録を行うリポジトリ
-func (p *PaymentCreditRepository) CreatePayment(request *domain.Payment) (*domain.Payment, error) {
+func (p *PaymentCreditRepository) CreatePayment(ctx context.Context, request *domain.Payment) (*domain.Payment, error) {
 	c, err := outbound.NewClient("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
 		panic(err)
@@ -39,7 +39,7 @@ func (p *PaymentCreditRepository) CreatePayment(request *domain.Payment) (*domai
 	}
 	buf := bytes.NewBuffer(requestJson)
 
-	res, err := c.CreateWithBody(context.Background(), "application/json", buf)
+	res, err := c.CreateWithBody(ctx, "application/json", buf)
 	defer res.Body.Close()
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (p *PaymentCreditRepository) CreatePayment(request *domain.Payment) (*domai
 }
 
 // 決済データ取得を行うリポジトリ
-func (p *PaymentCreditRepository) GetByOrderNo(paymentNo string) (*domain.Payment, error) {
+func (p *PaymentCreditRepository) GetByOrderNo(ctx context.Context, paymentNo string) (*domain.Payment, error) {
 	fmt.Println("Rest GetByPaymentNo")
 	c, err := outbound.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
@@ -63,7 +63,7 @@ func (p *PaymentCreditRepository) GetByOrderNo(paymentNo string) (*domain.Paymen
 	}
 
 	// http.Response として返却
-	res, err := c.GetByOrderNoWithResponse(context.Background(), paymentNo)
+	res, err := c.GetByOrderNoWithResponse(ctx, paymentNo)
 	if err != nil {
 		return &domain.Payment{}, err
 	}
@@ -73,7 +73,7 @@ func (p *PaymentCreditRepository) GetByOrderNo(paymentNo string) (*domain.Paymen
 }
 
 // 決済データの取り消し
-func (p *PaymentCreditRepository) DeleteByOrderNo(orderNo string) error {
+func (p *PaymentCreditRepository) DeleteByOrderNo(ctx context.Context, orderNo string) error {
 	fmt.Println("Rest DeleteByOrderNo")
 	c, err := outbound.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
 	if err != nil {
@@ -81,7 +81,7 @@ func (p *PaymentCreditRepository) DeleteByOrderNo(orderNo string) error {
 	}
 
 	// http.Response として返却
-	res, err := c.Delete(context.Background(), orderNo)
+	res, err := c.Delete(ctx, orderNo)
 	if err != nil {
 		return err
 	}

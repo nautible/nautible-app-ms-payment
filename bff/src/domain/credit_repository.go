@@ -1,8 +1,10 @@
 package domain
 
+import "context"
+
 // 後方サービスにリクエストするリポジトリインターフェース
 type CreditRepository interface {
-	CreatePayment(*Payment) (*Payment, error)
-	GetByOrderNo(string) (*Payment, error)
-	DeleteByOrderNo(string) error
+	CreatePayment(context.Context, *Payment) (*Payment, error)
+	GetByOrderNo(context.Context, string) (*Payment, error)
+	DeleteByOrderNo(context.Context, string) error
 }

@@ -17,7 +17,7 @@ type paymentStruct struct {
 	db *dynamo.DB
 }
 
-func NewPaymentDB() domain.PaymentRepository {
+func NewPaymentDB() domain.DynamoDbRepository {
 	db, err := createSession()
 	if err != nil {
 		panic(err)
@@ -26,7 +26,7 @@ func NewPaymentDB() domain.PaymentRepository {
 }
 
 // 決済データの登録
-func (p *paymentStruct) PutItem(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
+func (p *paymentStruct) PutPaymentItem(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	paymentNo, err := sequence(ctx, p.db)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (p *paymentStruct) PutItem(ctx context.Context, model *domain.Payment) (*do
 	model.AcceptNo = fmt.Sprintf("A%09d", *paymentNo)  // dummy 受付番号はA始まりとする
 	model.ReceiptDate = time.Now().String()            // dummy
 	table := p.db.Table("Payment")
-	if err := table.Put(model).Run(); err != nil {
+	if err := table.Put(model).RunWithContext(ctx); err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
 		return nil, err
 	}
@@ -44,10 +44,10 @@ func (p *paymentStruct) PutItem(ctx context.Context, model *domain.Payment) (*do
 }
 
 // OrderNoに該当する決済データを取得
-func (p *paymentStruct) GetItem(ctx context.Context, orderNo string) (*domain.Payment, error) {
+func (p *paymentStruct) GetPaymentItem(ctx context.Context, orderNo string) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	var result domain.Payment
-	err := table.Get("OrderNo", orderNo).One(&result)
+	err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -58,17 +58,17 @@ func (p *paymentStruct) GetItem(ctx context.Context, orderNo string) (*domain.Pa
 }
 
 // orderNoに該当する決済データ論理を削除
-func (p *paymentStruct) DeleteItem(ctx context.Context, orderNo string) error {
+func (p *paymentStruct) DeletePaymentItem(ctx context.Context, orderNo string) error {
 	table := p.db.Table("Payment")
 
 	var result domain.Payment
-	return table.Update("OrderNo", orderNo).Set("DeleteFlag", true).Value(&result)
+	return table.Update("OrderNo", orderNo).Set("DeleteFlag", true).ValueWithContext(ctx, &result)
 }
 
 func createSession() (*dynamo.DB, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-northeast-1"),
-		Endpoint:    aws.String("http://payment-credit-localstack.nautible-app-ms.svc.cluster.local:4566"),
+		Endpoint:    aws.String("http://payment-bff-localstack.nautible-app-ms.svc.cluster.local:4566"),
 		Credentials: credentials.NewStaticCredentials("test-key", "test-secret", ""),
 	})
 	if err != nil {
