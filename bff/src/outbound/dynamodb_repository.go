@@ -46,18 +46,3 @@ func createSession() (*dynamo.DB, error) {
 	db := dynamo.New(sess)
 	return db, nil
 }
-
-// シーケンス取得
-func sequence(ctx context.Context, db *dynamo.DB) (*int, error) {
-	var counter struct {
-		Name           string
-		SequenceNumber int
-	}
-	table := db.Table("Sequence")
-	err := table.Update("Name", "Payment").Add("SequenceNumber", 1).ValueWithContext(ctx, &counter)
-	if err != nil {
-		return nil, err
-	}
-	return &counter.SequenceNumber, err
-
-}
