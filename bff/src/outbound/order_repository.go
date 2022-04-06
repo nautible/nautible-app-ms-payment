@@ -25,15 +25,19 @@ func (p *OrderRepository) PaymentResponse(ctx context.Context, response *domain.
 		return err
 	}
 	buf := bytes.NewBuffer(requestJson)
-	str := string(buf.Bytes())
+	str := string(buf.String())
 	fmt.Println(str)
 	// http.Response として返却
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, buf)
-	req.Header.Set("Content-Type", "application/octet-stream")
-	res, err := http.DefaultClient.Do(req)
-	defer res.Body.Close()
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
 	return nil
 }

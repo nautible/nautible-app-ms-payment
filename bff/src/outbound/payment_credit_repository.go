@@ -40,10 +40,11 @@ func (p *PaymentCreditRepository) CreatePayment(ctx context.Context, request *do
 	buf := bytes.NewBuffer(requestJson)
 
 	res, err := c.CreateWithBody(ctx, "application/json", buf)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
 		buf := new(bytes.Buffer)
 		io.Copy(buf, res.Body)
