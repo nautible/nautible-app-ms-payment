@@ -11,7 +11,7 @@ import (
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/bff/domain"
 	outbound "github.com/nautible/nautible-app-ms-payment/pkg/bff/outbound"
-	server "github.com/nautible/nautible-app-ms-payment/pkg/generate/backendserver"
+	server "github.com/nautible/nautible-app-ms-payment/pkg/generate/bffserver"
 )
 
 type CloudEvents struct {
