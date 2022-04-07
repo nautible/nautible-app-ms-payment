@@ -1,6 +1,15 @@
 # nautible-app-ms-payment
 
-nautible-app-ms-payment project
+## 概要
+
+本プロジェクトはGolangによるサンプルアプリケーションになります。アプリケーションは以下の技術要素を含みます。
+
+- oapi-codegenを利用したOpenAPIサーバー(chi)/クライアントの生成
+- Dapr同期通信（ServiceInvocation）
+  - oapi-codegenで生成したHTTPクライアントからのDapr同期通信
+- Dapr非同期通信
+  - net/httpパッケージで作成したHTTPサーバーでCloudEvents(application/octet-stream)の受信処理
+- AWSSDKを利用したDynamoDBアクセス
 
 ## アーキテクチャ図
 
