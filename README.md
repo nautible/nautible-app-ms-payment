@@ -10,16 +10,14 @@ nautible-app-ms-payment project
 
 - cash
   - 代引き決済を行うダミーサービス
-    - 代引き決済
-    - 決済内容更新
-    - 決済キャンセル
+    - 決済登録
+    - 決済キャンセル（論理削除）
 - credit
   - クレジット決済を行うダミーサービス
-    - クレジット決済（モック処理）
-    - 決済内容更新
-    - 決済キャンセル
+    - 決済登録
+    - 決済キャンセル（論理削除）
 - bff
-  - 各種決済サービスを呼び出して結果を返すフロントサービス
+  - 各種決済サービスを呼び出して結果を返す
 
 ## ディレクトリ構成
 
@@ -28,12 +26,34 @@ nautible-app-ms-payment project
 
 ## サンプルアプリ利用手順
 
+### skaffoldによるアプリケーション起動
+
+BFF
+
+```bash
+cd scripts/bff
+./skaffold.sh
+```
+
+Cash
+
+```bash
+cd scripts/cash
+./skaffold.sh
+```
+
+Credit
+
+```bash
+cd scripts/credit
+./skaffold.sh
+```
 
 ## アプリ構築手順
 
-### 前提
+### Golangバージョン
 
-golang(v16)はインストール済みとする
+1.18
 
 ### OpenAPI
 
@@ -44,7 +64,7 @@ go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.9.0
 ```
 
 - YAMLファイルを準備
-  - 参考：bff/openapi/内のYAMLファイル
+  - 参考：api/内のYAMLファイル
 
 - BFFからOrderサービスへ接続するクライアントコード生成
 
@@ -76,26 +96,7 @@ oapi-codegen -package backendserver -generate "spec" -o pkg/generate/backendserv
 
 ### go mod
 
-BFF
-
 ```bash
-cd bff
-go mod init payment-bff
-go mod tidy
-```
-
-Cash
-
-```bash
-cd cash
-go mod init payment-cash
-go mod tidy
-```
-
-Credit
-
-```bash
-cd credit
-go mod init payment-credit
+go mod init github.com/nautible/nautible-app-ms-payment
 go mod tidy
 ```
