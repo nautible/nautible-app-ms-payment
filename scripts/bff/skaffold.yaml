@@ -6,19 +6,28 @@ build:
   artifacts:
     - image: nautible-app-ms-payment-bff
       custom:
-        buildCommand: ./build.sh
+        buildCommand: ./scripts/bff/build.sh
         dependencies:
           paths:
             - "."
           ignore:
-            - "**/target/**"
-            - "README.md"
-            - "go.sum"
-            - "**/openapi/**"
+            - ".github/**"
+            - "api/**"
+            - "assets/**"
+            - "cmd/cash/**"
+            - "cmd/credit/**"
+            - "pkg/cash/**"
+            - "pkg/credit/**"
+            - "scripts/**"
+            - "**/go.sum"
+            - ".gitignore"
+            - "LICENSE"
+            - "NOTICE"
+            - "*.md"
   local:
     push: false
     useBuildkit: true
 deploy:
   kustomize:
     paths:
-      - ../../../nautible-app-ms-payment-manifest/bff/overlays/local-dev
+      - ../nautible-app-ms-payment-manifest/bff/overlays/local-dev
