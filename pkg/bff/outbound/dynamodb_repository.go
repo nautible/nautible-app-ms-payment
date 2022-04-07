@@ -36,7 +36,6 @@ func (p *paymentStruct) PutPaymentHistory(ctx context.Context, model *domain.Pay
 
 func createSession() (*dynamo.DB, error) {
 	sess := session.Must(session.NewSession())
-	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
-	db := dynamo.New(sess, aws.NewConfig().WithRegion(os.Getenv("DYNAMODB_REGION")).WithEndpoint(endpoint))
+	db := dynamo.New(sess, aws.NewConfig().WithRegion(os.Getenv("DYNAMODB_REGION")).WithEndpoint(os.Getenv("DYNAMODB_ENDPOINT")))
 	return db, nil
 }
