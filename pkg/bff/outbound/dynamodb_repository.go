@@ -3,11 +3,11 @@ package outbound
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/nautible/nautible-app-ms-payment/pkg/bff/domain"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
 )
@@ -35,14 +35,8 @@ func (p *paymentStruct) PutPaymentHistory(ctx context.Context, model *domain.Pay
 }
 
 func createSession() (*dynamo.DB, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("ap-northeast-1"),
-		Endpoint:    aws.String("http://payment-bff-localstack.nautible-app-ms.svc.cluster.local:4566"),
-		Credentials: credentials.NewStaticCredentials("test-key", "test-secret", ""),
-	})
-	if err != nil {
-		return nil, err
-	}
-	db := dynamo.New(sess)
+	sess := session.Must(session.NewSession())
+	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
+	db := dynamo.New(sess, aws.NewConfig().WithRegion(os.Getenv("DYNAMODB_REGION")).WithEndpoint(endpoint))
 	return db, nil
 }
