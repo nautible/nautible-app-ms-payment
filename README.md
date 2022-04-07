@@ -6,9 +6,9 @@
 
 - oapi-codegenを利用したOpenAPIサーバー(chi)/クライアントの生成
 - Dapr同期通信（ServiceInvocation）
-  - oapi-codegenで生成したHTTPクライアントからのDapr同期通信
+  - oapi-codegenで生成したHTTPクライアントからのDapr同期通信（DaprSDKは未使用）
 - Dapr非同期通信
-  - net/httpパッケージで作成したHTTPサーバーでCloudEvents(application/octet-stream)の受信処理
+  - net/httpパッケージで作成したHTTPサーバーでCloudEvents(application/octet-stream)の受信処理（DaprSDKは未使用）
 - AWSSDKを利用したDynamoDBアクセス
 
 ## アーキテクチャ図
