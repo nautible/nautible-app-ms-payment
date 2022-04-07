@@ -1,0 +1,24 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: nautible-app-ms-payment-cash
+build:
+  artifacts:
+    - image: nautible-app-ms-payment-cash
+      custom:
+        buildCommand: ./build.sh
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - "**/target/**"
+            - "README.md"
+            - "go.sum"
+            - "**/openapi/**"
+  local:
+    push: false
+    useBuildkit: true
+deploy:
+  kustomize:
+    paths:
+      - ../../../nautible-app-ms-payment-manifest/cash/overlays/local-dev
