@@ -4,7 +4,10 @@ on:
   push:
     branches: [ main ]
     paths: 
-      - 'bff/**'
+      - 'cmd/bff'
+      - 'pkg/bff'
+      - 'pkg/generate'
+      - 'package/bff'
       - '.github/workflows/maven-bff.yml'
 
 jobs:
@@ -41,8 +44,8 @@ jobs:
         ECR_REGISTRY: public.ecr.aws/nautible
         ECR_REPOSITORY: nautible-app-ms-payment-bff
       run: |
-        cd $GITHUB_WORKSPACE/bff
-        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Docker/Dockerfile .
+        cd $GITHUB_WORKSPACE
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/bff/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"

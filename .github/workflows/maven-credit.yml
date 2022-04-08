@@ -4,8 +4,11 @@ on:
   push:
     branches: [ main ]
     paths: 
-      - 'credit/**'
-      - '.github/workflows/maven-credit.yml'
+      - 'cmd/credit'
+      - 'pkg/credit'
+      - 'pkg/generate'
+      - 'package/credit'
+      - '.github/workflows/maven-bff.yml'
 
 jobs:
   build:
@@ -41,8 +44,8 @@ jobs:
         ECR_REGISTRY: public.ecr.aws/nautible
         ECR_REPOSITORY: nautible-app-ms-payment-credit
       run: |
-        cd $GITHUB_WORKSPACE/credit
-        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./Docker/Dockerfile .
+        cd $GITHUB_WORKSPACE
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
