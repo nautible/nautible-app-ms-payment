@@ -22,7 +22,7 @@
                 <mxCell id="47" value="&lt;span style=&quot;font-size: 20px&quot;&gt;クレジット決済サービス&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;" parent="WF4X5hiQnJDSYWs5_pEE-1" vertex="1">
                     <mxGeometry x="900" y="430" width="310" height="127.5" as="geometry"/>
                 </mxCell>
-                <mxCell id="49" value="&lt;span style=&quot;font-size: 20px&quot;&gt;決済サービスフロント&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;" parent="WF4X5hiQnJDSYWs5_pEE-1" vertex="1">
+                <mxCell id="49" value="&lt;span style=&quot;font-size: 20px&quot;&gt;決済エンドポイントサービス&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;" parent="WF4X5hiQnJDSYWs5_pEE-1" vertex="1">
                     <mxGeometry x="760" y="230" width="310" height="120" as="geometry"/>
                 </mxCell>
                 <mxCell id="63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.75;entryDx=0;entryDy=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" parent="WF4X5hiQnJDSYWs5_pEE-1" source="59" target="50" edge="1">
@@ -68,7 +68,7 @@
                 <mxCell id="58" value="" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;align=center;direction=north;" parent="WF4X5hiQnJDSYWs5_pEE-1" vertex="1">
                     <mxGeometry x="210" y="238.5" width="140" height="61" as="geometry"/>
                 </mxCell>
-                <mxCell id="70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="WF4X5hiQnJDSYWs5_pEE-1" source="61" edge="1" target="WF4X5hiQnJDSYWs5_pEE-65">
+                <mxCell id="70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="WF4X5hiQnJDSYWs5_pEE-1" source="61" target="WF4X5hiQnJDSYWs5_pEE-65" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="1370" y="615" as="targetPoint"/>
                         <Array as="points">
