@@ -1,0 +1,123 @@
+openapi: "3.0.2"
+info:
+  title: nautible-app-ms-payment
+  version: 1.0.0-SNAPSHOT
+servers:
+  - url: http://localhost:8080/
+paths:
+  /payment/create:
+    post:
+      tags:
+        - RestPaymentService
+      operationId: create
+      summary: Create Payment for SAGA
+      description: Create Payment for SAGA
+      requestBody:
+        content:
+          application/json:
+              schema:
+                $ref: "#/components/schemas/RestCreatePayment"
+      responses:
+        200:
+          description: successful operation
+          content: {}
+  /payment/cancel:
+    post:
+      tags:
+        - RestCancelPaymentService
+      operationId: cancel
+      summary: Cancel Payment for SAGA
+      description: Cancel Payment for SAGA
+      requestBody:
+        content:
+          application/json:
+              schema:
+                $ref: "#/components/schemas/RestCancelPayment"
+      responses:
+        200:
+          description: successful operation
+          content: {}
+  /payment/rejectCreate:
+    post:
+      tags:
+        - RestPaymentService
+      operationId: rejectCreate
+      summary: Reject Create Payment for SAGA
+      description: Reject Create Payment for SAGA
+      requestBody:
+        content:
+          application/json:
+              schema:
+                $ref: "#/components/schemas/RestRejectCreatePayment"
+      responses:
+        200:
+          description: successful operation
+          content: {}
+components:
+  schemas:
+    RestCreatePayment:
+      type: object
+      required:
+        - requestId
+        - orderDate
+        - customerId
+        - totalPrice
+        - paymentType
+        - orderNo
+      properties:
+        requestId:
+          description: 処理要求を一意に表すリクエストId。
+          type: string
+          example: O0000000001
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+        paymentType:
+          type: string
+          example: "01"
+    RestCancelPayment:
+      type: object
+      required:
+        - requestId
+        - cancelDate
+        - customerId
+        - paymentType
+        - orderNo
+      properties:
+        requestId:
+          description: 処理要求を一意に表すリクエストId。
+          type: string
+          example: O0000000001
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        cancelDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        paymentType:
+          type: string
+          example: "01"
+    RestRejectCreatePayment:
+      type: object
+      required:
+        - requestId
+      properties:
+        requestId:
+          description: 処理要求を一意に表すリクエストId。
+          type: string
+          example: O0000000001

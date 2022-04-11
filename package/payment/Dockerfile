@@ -3,13 +3,13 @@ FROM golang:1.18.0 as builder
 WORKDIR /go/app
 
 COPY ./pkg/ ./pkg/
-COPY ./cmd/credit/ ./cmd/credit/
+COPY ./cmd/payment/ ./cmd/payment/
 COPY ./go.mod  ./
 
 ARG CGO_ENABLED=0
 ARG GOOS=linux
 ARG GOARCH=amd64
-RUN go mod tidy && cd cmd/credit && \
+RUN go mod tidy && cd cmd/payment && \
     go build \
     -o /go/app/bin/main \
     -ldflags '-s -w'

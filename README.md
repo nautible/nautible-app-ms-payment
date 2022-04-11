@@ -17,21 +17,18 @@
 
 ## 機能
 
-- cash
-  - 代引き決済を行うダミーサービス
-    - 決済登録
-    - 決済キャンセル（論理削除）
 - credit
   - クレジット決済を行うダミーサービス
     - 決済登録
     - 決済キャンセル（論理削除）
-- bff
-  - 各種決済サービスを呼び出して結果を返す
+- payment
+  - 外部のサービスが決済サービスを呼び出すためのエンドポイント
+
+なお、paymentとcreditはDaprのServiceInvocationの技術サンプルのため別プロセスで実行するようにしています。
 
 ## ディレクトリ構成
 
 [Standard Go Project Layout](https://github.com/golang-standards/project-layout/blob/master/README_ja.md)を参考に構成
-
 
 ## サンプルアプリ利用手順
 
@@ -41,13 +38,6 @@ BFF
 
 ```bash
 cd scripts/bff
-./skaffold.sh
-```
-
-Cash
-
-```bash
-cd scripts/cash
 ./skaffold.sh
 ```
 
@@ -75,7 +65,7 @@ go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.9.0
 - YAMLファイルを準備
   - 参考：api/内のYAMLファイル
 
-- BFFからOrderサービスへ接続するクライアントコード生成
+- PaymentからOrderサービスへ接続するクライアントコード生成
 
 ```bash
 oapi-codegen -package orderclient -generate "types" -o pkg/generate/orderclient/payment_types.go api/order.yaml
@@ -85,22 +75,22 @@ oapi-codegen -package orderclient -generate "client" -o pkg/generate/orderclient
 - 外部からの接続用サーバーコード生成
 
 ```bash
-oapi-codegen -package bffserver -generate "types" -o pkg/generate/bffserver/types.go api/payment_bff.yaml
+oapi-codegen -package paymentserver -generate "types" -o pkg/generate/paymentserver/types.go api/payment.yaml
 ```
 
-- BFFから内部API（cash/credit）へ接続するクライアントコード生成
+- BFFから内部API（credit）へ接続するクライアントコード生成
 
 ```bash
-oapi-codegen -package paymentclient -generate "types" -o pkg/generate/paymentclient/payment_types.go api/payment_backend.yaml
-oapi-codegen -package paymentclient -generate "client" -o pkg/generate/paymentclient/http_client.go api/payment_backend.yaml
+oapi-codegen -package paymentclient -generate "types" -o pkg/generate/paymentclient/payment_types.go api/credit.yaml
+oapi-codegen -package paymentclient -generate "client" -o pkg/generate/paymentclient/http_client.go api/credit.yaml
 ```
 
-- 内部接続用（bffからcash/credit）のサーバーコード生成
+- 内部接続用（paymentからcredit）のサーバーコード生成
 
 ```bash
-oapi-codegen -package backendserver -generate "types" -o pkg/generate/backendserver/types.go api/payment_backend.yaml
-oapi-codegen -package backendserver -generate "chi-server" -o pkg/generate/backendserver/server.go api/payment_backend.yaml
-oapi-codegen -package backendserver -generate "spec" -o pkg/generate/backendserver/spec.go api/payment_backend.yaml
+oapi-codegen -package creditserver -generate "types" -o pkg/generate/creditserver/types.go api/credit.yaml
+oapi-codegen -package creditserver -generate "chi-server" -o pkg/generate/creditserver/server.go api/credit.yaml
+oapi-codegen -package creditserver -generate "spec" -o pkg/generate/creditserver/spec.go api/credit.yaml
 ```
 
 ### go mod

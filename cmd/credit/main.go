@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	handler "github.com/nautible/nautible-app-ms-payment/pkg/credit/handler"
-	server "github.com/nautible/nautible-app-ms-payment/pkg/generate/backendserver"
+	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
+	server "github.com/nautible/nautible-app-ms-payment/pkg/generate/creditserver"
+	controller "github.com/nautible/nautible-app-ms-payment/pkg/inbound"
+	dynamodb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/dynamodb"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
@@ -26,17 +28,26 @@ func main() {
 
 	swagger.Servers = nil
 
-	new_payment := handler.NewPayment()
+	paymentController := createController()
 
 	r := chi.NewRouter()
 
 	r.Use(middleware.OapiRequestValidator(swagger))
 
-	server.HandlerFromMux(new_payment, r)
+	server.HandlerFromMux(paymentController, r)
 
 	s := &http.Server{
 		Handler: r,
 		Addr:    fmt.Sprintf("0.0.0.0:%d", *port),
 	}
 	log.Fatal(s.ListenAndServe())
+}
+
+func createController() *controller.CreditController {
+
+	repo := dynamodb.NewDynamoDbRepository()
+	svc := domain.NewCreditService(repo)
+
+	creditController := controller.NewCreditController(&svc)
+	return creditController
 }
