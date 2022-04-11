@@ -34,10 +34,10 @@
 
 ### skaffoldによるアプリケーション起動
 
-BFF
+Payment
 
 ```bash
-cd scripts/bff
+cd scripts/payment
 ./skaffold.sh
 ```
 
@@ -78,7 +78,7 @@ oapi-codegen -package orderclient -generate "client" -o pkg/generate/orderclient
 oapi-codegen -package paymentserver -generate "types" -o pkg/generate/paymentserver/types.go api/payment.yaml
 ```
 
-- BFFから内部API（credit）へ接続するクライアントコード生成
+- Paymentから内部API（credit）へ接続するクライアントコード生成
 
 ```bash
 oapi-codegen -package paymentclient -generate "types" -o pkg/generate/paymentclient/payment_types.go api/credit.yaml
