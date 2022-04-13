@@ -12,6 +12,10 @@ import (
 	"github.com/guregu/dynamo"
 )
 
+const TABLE_PAYMENT string = "Payment"
+const TABLE_PAYMENT_ALLOCATE_HISTORY string = "PaymentAllocateHistory"
+const TABLE_SEQUENCE string = "Sequence"
+
 type dynamoDb struct {
 	db *dynamo.DB
 }
@@ -26,7 +30,7 @@ func NewDynamoDbRepository() domain.DbRepository {
 
 // 決済データの登録
 func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.PaymentModel) (*domain.PaymentModel, error) {
-	table := p.db.Table("Payment")
+	table := p.db.Table(TABLE_PAYMENT)
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
 		return nil, err
@@ -37,12 +41,12 @@ func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.PaymentMode
 
 // OrderNoに該当する決済データを取得
 func (p *dynamoDb) GetPaymentItem(ctx context.Context, orderNo string) (*domain.PaymentModel, error) {
-	table := p.db.Table("Payment")
+	table := p.db.Table(TABLE_PAYMENT)
 	var result domain.PaymentModel
-	err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result)
-	if err != nil {
+	if err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result); err != nil {
 		return nil, err
 	}
+
 	if result.DeleteFlag {
 		return nil, nil
 	}
@@ -51,7 +55,7 @@ func (p *dynamoDb) GetPaymentItem(ctx context.Context, orderNo string) (*domain.
 
 // orderNoに該当する決済データ論理を削除
 func (p *dynamoDb) DeletePaymentItem(ctx context.Context, orderNo string) error {
-	table := p.db.Table("Payment")
+	table := p.db.Table(TABLE_PAYMENT)
 
 	var result domain.Payment
 	return table.Update("OrderNo", orderNo).Set("DeleteFlag", true).ValueWithContext(ctx, &result)
@@ -59,7 +63,7 @@ func (p *dynamoDb) DeletePaymentItem(ctx context.Context, orderNo string) error 
 
 // 履歴の登録
 func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.PaymentModel) error {
-	table := p.db.Table("PaymentAllocateHistory")
+	table := p.db.Table(TABLE_PAYMENT_ALLOCATE_HISTORY)
 	if err := table.Put(model).If("attribute_not_exists(RequestId)").RunWithContext(ctx); err != nil {
 		return err
 	}
@@ -73,7 +77,7 @@ func (p *dynamoDb) Sequence(ctx context.Context) (*int, error) {
 		Name           string
 		SequenceNumber int
 	}
-	table := p.db.Table("Sequence")
+	table := p.db.Table(TABLE_SEQUENCE)
 	err := table.Update("Name", "Payment").Add("SequenceNumber", 1).ValueWithContext(ctx, &counter)
 	if err != nil {
 		return nil, err
