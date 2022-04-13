@@ -59,7 +59,7 @@ func (p *dynamoDb) DeletePaymentItem(ctx context.Context, orderNo string) error 
 
 // 履歴の登録
 func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.PaymentModel) error {
-	table := p.db.Table("PaymentHistory")
+	table := p.db.Table("PaymentAllocateHistory")
 	if err := table.Put(model).If("attribute_not_exists(RequestId)").RunWithContext(ctx); err != nil {
 		return err
 	}
