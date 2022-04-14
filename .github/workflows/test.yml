@@ -1,0 +1,25 @@
+name: Go CI Payment Application
+
+on:
+  push:
+    branches: [ feature/golang ]
+
+jobs:
+  build:
+    
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+    - name: Checkout manifest repo
+      uses: actions/checkout@v2
+      with:
+        repository: nautible/nautible-app-ms-payment-manifest
+        path: nautible-app-ms-payment-manifest
+        token: ${{ secrets.PAT }}
+    - name: log
+      run: echo '${{ toJSON(github) }}'
