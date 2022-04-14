@@ -22,5 +22,5 @@ jobs:
         path: nautible-app-ms-payment-manifest
         token: ${{ secrets.PAT }}
     - name: log
-      run: echo '${{ toJSON(github) }}'
+      run: echo '${{ github.event.commits.author.email }}'
 
