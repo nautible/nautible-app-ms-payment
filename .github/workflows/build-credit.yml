@@ -1,13 +1,13 @@
-name: Go CI Payment Application
+name: Go CI Credit Application
 
 on:
   push:
     branches: [ main ]
     paths: 
-      - 'cmd/payment'
+      - 'cmd/credit'
       - 'pkg'
-      - 'package/payment'
-      - '.github/workflows/maven-payment.yml'
+      - 'package/credit'
+      - '.github/workflows/maven-credit.yml'
 
 jobs:
   build:
@@ -41,10 +41,10 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
-        ECR_REPOSITORY: nautible-app-ms-payment
+        ECR_REPOSITORY: nautible-app-ms-payment-credit
       run: |
         cd $GITHUB_WORKSPACE
-        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
@@ -56,9 +56,9 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/nautible-app-ms-payment-manifest
         git checkout -b $tag
-        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:'$IMAGE_TAG'/' ./payment/base/payment-deploy.yaml 
-        git config user.name github-actions
-        git config user.email github-actions@github.com
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:'$IMAGE_TAG'/' ./credit/base/payment-credit-deploy.yaml 
+        git config user.name ${{ github.event.pusher.name }}
+        git config user.email ${{ github.event.pusher.email }}
         git add .
         git commit -m "update manifest"
         git push --set-upstream origin $tag
