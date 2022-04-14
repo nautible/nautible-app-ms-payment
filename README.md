@@ -81,8 +81,8 @@ oapi-codegen -package paymentserver -generate "types" -o pkg/generate/paymentser
 - Paymentから内部API（credit）へ接続するクライアントコード生成
 
 ```bash
-oapi-codegen -package paymentclient -generate "types" -o pkg/generate/paymentclient/payment_types.go api/credit.yaml
-oapi-codegen -package paymentclient -generate "client" -o pkg/generate/paymentclient/http_client.go api/credit.yaml
+oapi-codegen -package creditclient -generate "types" -o pkg/generate/creditclient/payment_types.go api/credit.yaml
+oapi-codegen -package creditclient -generate "client" -o pkg/generate/creditclient/http_client.go api/credit.yaml
 ```
 
 - 内部接続用（paymentからcredit）のサーバーコード生成

@@ -23,27 +23,20 @@ type ErrorDetail struct {
 	Message string `json:"message"`
 }
 
-type PaymentService interface {
-	CreatePayment(context.Context, *PaymentModel)
-	GetByOrderNo(context.Context, string, string) (*PaymentModel, error)
-	DeleteByOrderNo(context.Context, string, string) error
+type PaymentService struct {
+	payment *PaymentRepository
+	credit  *CreditMessageSender
+	order   *OrderMessageSender
 }
 
-type Payment struct {
-	repo   *DbRepository
-	credit *CreditMessage
-	order  *OrderMessage
-}
-
-func NewPaymentService(repo *DbRepository, credit *CreditMessage, order *OrderMessage) PaymentService {
-	return &Payment{repo, credit, order}
+func NewPaymentService(payment *PaymentRepository, credit *CreditMessageSender, order *OrderMessageSender) *PaymentService {
+	return &PaymentService{payment, credit, order}
 }
 
 // バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
-func (svc *Payment) CreatePayment(ctx context.Context, model *PaymentModel) {
-	fmt.Println("CreatePaymentService")
+func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 	// バリデート
-	var orderResponse OrderResponse
+	var orderResponse Order
 	result := validate(model)
 	if result != "" {
 		orderResponse.ProcessType = string(TypePayment)
@@ -56,7 +49,7 @@ func (svc *Payment) CreatePayment(ctx context.Context, model *PaymentModel) {
 	}
 
 	// 冪等性担保 履歴テーブルへの登録
-	if err := (*svc.repo).PutPaymentHistory(ctx, model); err != nil {
+	if err := (*svc.payment).PutPaymentHistory(ctx, model); err != nil {
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId
 		if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
@@ -79,25 +72,34 @@ func (svc *Payment) CreatePayment(ctx context.Context, model *PaymentModel) {
 	(*svc.order).Publish(ctx, &orderResponse)
 }
 
-func (svc *Payment) GetByOrderNo(ctx context.Context, paymentType string, orderNo string) (*PaymentModel, error) {
+func (svc *PaymentService) Find(ctx context.Context, paymentType string, customerId int32, orderDateFrom string, orderDateTo string) ([]*Payment, error) {
 	if paymentType == string(TypeCash) {
-		return (*svc.repo).GetPaymentItem(ctx, orderNo)
+		return (*svc.payment).FindPaymentItem(ctx, customerId, orderDateFrom, orderDateTo)
+	} else if paymentType == string(TypeCredit) {
+		return (*svc.credit).Find(ctx, customerId, orderDateFrom, orderDateTo)
+	}
+	return nil, nil
+}
+
+func (svc *PaymentService) GetByOrderNo(ctx context.Context, paymentType string, orderNo string) (*Payment, error) {
+	if paymentType == string(TypeCash) {
+		return (*svc.payment).GetPaymentItem(ctx, orderNo)
 	} else if paymentType == string(TypeCredit) {
 		return (*svc.credit).GetByOrderNo(ctx, orderNo)
 	}
 	return nil, nil
 }
 
-func (svc *Payment) DeleteByOrderNo(ctx context.Context, paymentType string, orderNo string) error {
+func (svc *PaymentService) DeleteByOrderNo(ctx context.Context, paymentType string, orderNo string) error {
 	if paymentType == string(TypeCash) {
-		return (*svc.repo).DeletePaymentItem(ctx, orderNo)
+		return (*svc.payment).DeletePaymentItem(ctx, orderNo)
 	} else if paymentType == string(TypeCredit) {
 		return (*svc.credit).DeleteByOrderNo(ctx, orderNo)
 	}
 	return nil
 }
 
-func validate(paymentModel *PaymentModel) string {
+func validate(paymentModel *Payment) string {
 	// validator doc https://github.com/go-playground/validator/tree/master
 	validate := validator.New()
 	// jsonタグ名で応答できるように設定する
@@ -132,12 +134,12 @@ func validate(paymentModel *PaymentModel) string {
 	return ""
 }
 
-func createPayment(ctx context.Context, svc *Payment, model *PaymentModel) *OrderResponse {
-	var orderResponse OrderResponse
-	var res *PaymentModel
+func createPayment(ctx context.Context, svc *PaymentService, model *Payment) *Order {
+	var orderResponse Order
+	var res *Payment
 	var err error
 	if model.PaymentType == string(TypeCash) {
-		paymentNo, err := (*svc.repo).Sequence(ctx)
+		paymentNo, err := (*svc.payment).Sequence(ctx)
 		if err != nil {
 			orderResponse.ProcessType = string(TypePayment)
 			orderResponse.RequestId = model.RequestId
@@ -147,7 +149,7 @@ func createPayment(ctx context.Context, svc *Payment, model *PaymentModel) *Orde
 		}
 		model.PaymentNo = fmt.Sprintf("P%010d", *paymentNo) // dummy 支払い番号はP始まりとする
 		model.DeleteFlag = false
-		res, err = (*svc.repo).PutPaymentItem(ctx, model)
+		res, err = (*svc.payment).PutPaymentItem(ctx, model)
 		if err != nil {
 			orderResponse.ProcessType = string(TypePayment)
 			orderResponse.RequestId = model.RequestId
@@ -156,7 +158,7 @@ func createPayment(ctx context.Context, svc *Payment, model *PaymentModel) *Orde
 			return &orderResponse
 		}
 	} else if model.PaymentType == string(TypeCredit) {
-		res, err = (*svc.credit).CreatePayment(ctx, model)
+		res, err = (*svc.credit).Create(ctx, model)
 	} else {
 		// 支払い区分不正
 		orderResponse.ProcessType = string(TypePayment)

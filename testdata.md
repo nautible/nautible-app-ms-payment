@@ -17,7 +17,7 @@ curl http://localhost:8080/payment/ -D - -X PUT -i -H "Content-Type: application
 ## 検索
 
 ```
-curl "http://localhost:8080/payment/?customerId=1&orderDateFrom=2021/01/01&orderDateTo=2021/04/01" -D -
+curl "http://localhost:8080/payment?customerId=1&orderDateFrom=2021-01-01&orderDateTo=2023-04-01" -D -
 ```
 
 ## ID指定

@@ -20,7 +20,7 @@ type dynamoDb struct {
 	db *dynamo.DB
 }
 
-func NewDynamoDbRepository() domain.DbRepository {
+func NewDynamoDbRepository() domain.PaymentRepository {
 	db, err := createSession()
 	if err != nil {
 		panic(err)
@@ -28,8 +28,19 @@ func NewDynamoDbRepository() domain.DbRepository {
 	return &dynamoDb{db: db}
 }
 
+func (p *dynamoDb) FindPaymentItem(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
+	var payments []*domain.Payment
+	table := p.db.Table(TABLE_PAYMENT)
+
+	if err := table.Get("CustomerId", customerId).Range("OrderDate", dynamo.GreaterOrEqual, orderDateFrom).Range("OrderDate", dynamo.LessOrEqual, orderDateTo).Index("GSI-CustomerId").AllWithContext(ctx, &payments); err != nil {
+		fmt.Printf("Failed to get item[%v]\n", err)
+		return nil, err
+	}
+	return payments, nil
+}
+
 // 決済データの登録
-func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.PaymentModel) (*domain.PaymentModel, error) {
+func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	table := p.db.Table(TABLE_PAYMENT)
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
@@ -40,13 +51,12 @@ func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.PaymentMode
 }
 
 // OrderNoに該当する決済データを取得
-func (p *dynamoDb) GetPaymentItem(ctx context.Context, orderNo string) (*domain.PaymentModel, error) {
+func (p *dynamoDb) GetPaymentItem(ctx context.Context, orderNo string) (*domain.Payment, error) {
 	table := p.db.Table(TABLE_PAYMENT)
-	var result domain.PaymentModel
+	var result domain.Payment
 	if err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result); err != nil {
 		return nil, err
 	}
-
 	if result.DeleteFlag {
 		return nil, nil
 	}
@@ -62,7 +72,7 @@ func (p *dynamoDb) DeletePaymentItem(ctx context.Context, orderNo string) error 
 }
 
 // 履歴の登録
-func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.PaymentModel) error {
+func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.Payment) error {
 	table := p.db.Table(TABLE_PAYMENT_ALLOCATE_HISTORY)
 	if err := table.Put(model).If("attribute_not_exists(RequestId)").RunWithContext(ctx); err != nil {
 		return err

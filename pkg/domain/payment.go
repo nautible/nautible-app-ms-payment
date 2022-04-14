@@ -1,7 +1,7 @@
 package domain
 
 // Paymentのモデル定義
-type PaymentModel struct {
+type Payment struct {
 	RequestId   string `json:"requestId" validate:"required,len=11"`
 	PaymentNo   string `json:"paymentNo"`
 	PaymentType string `json:"paymentType" validate:"required"`
@@ -12,5 +12,5 @@ type PaymentModel struct {
 	CustomerId  int32  `json:"customerId" validate:"required,gte=0"`
 	TotalPrice  int32  `json:"totalPrice" validate:"required,gte=0,lte=999999"`
 	OrderStatus string `json:"orderStatus"`
-	DeleteFlag  bool   `json:"deleteFlag"` // 削除フラグ（false:有効 / true 削除）
+	DeleteFlag  bool   `json:"deleteFlag"`
 }

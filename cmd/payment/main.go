@@ -13,22 +13,22 @@ import (
 func main() {
 	controller := createController()
 	http.HandleFunc("/helthz", func(w http.ResponseWriter, r *http.Request) {
-		(*controller).HelthCheckHandler(w, r)
+		(*controller).HelthCheck(w, r)
 	})
 	http.HandleFunc("/payment/create", func(w http.ResponseWriter, r *http.Request) {
-		(*controller).CreateHandler(w, r)
+		(*controller).Create(w, r)
 	})
 	http.HandleFunc("/payment/rejectCreate", func(w http.ResponseWriter, r *http.Request) {
-		(*controller).RejectCreateHandler(w, r)
+		(*controller).RejectCreate(w, r)
 	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func createController() *controller.PaymentController {
-	dynamoDbRepository := dynamodb.NewDynamoDbRepository()
-	creditRepository := rest.NewCreditMessage()
-	orderRepository := rest.NewOrderMessage()
-	service := domain.NewPaymentService(&dynamoDbRepository, &creditRepository, &orderRepository)
-	controller := controller.NewPaymentController(&service)
+	paymentRepository := dynamodb.NewDynamoDbRepository()
+	creditMessage := rest.NewCreditMessage()
+	orderMessage := rest.NewOrderMessage()
+	service := domain.NewPaymentService(&paymentRepository, &creditMessage, &orderMessage)
+	controller := controller.NewPaymentController(service)
 	return controller
 }

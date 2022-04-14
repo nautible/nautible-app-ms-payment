@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd ../../
-skaffold dev --filename=./scripts/credit/skaffold.yaml
+skaffold dev --filename=./scripts/credit/skaffold.yaml --port-forward

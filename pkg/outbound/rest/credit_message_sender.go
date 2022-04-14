@@ -11,18 +11,41 @@ import (
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
 
-	client "github.com/nautible/nautible-app-ms-payment/pkg/generate/paymentclient"
+	client "github.com/nautible/nautible-app-ms-payment/pkg/generate/creditclient"
 )
 
 type CreditMessage struct{}
 
-func NewCreditMessage() domain.CreditMessage {
+func NewCreditMessage() domain.CreditMessageSender {
 	creditMessage := CreditMessage{}
 	return &creditMessage
 }
 
+func (p *CreditMessage) Find(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
+	c, err := client.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
+	if err != nil {
+		panic(err)
+	}
+	var param *client.FindParams
+	param.CustomerId = &customerId
+	param.OrderDateFrom = &orderDateFrom
+	param.OrderDateTo = &orderDateTo
+
+	res, err := c.FindWithResponse(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.HTTPResponse.StatusCode == http.StatusOK || res.HTTPResponse.StatusCode == http.StatusCreated {
+		var result []*domain.Payment
+		err := json.Unmarshal(res.Body, &result)
+		return result, err
+	}
+	return nil, errors.New("http response not success")
+}
+
 // 決済登録を行うリポジトリ
-func (p *CreditMessage) CreatePayment(ctx context.Context, request *domain.PaymentModel) (*domain.PaymentModel, error) {
+func (p *CreditMessage) Create(ctx context.Context, request *domain.Payment) (*domain.Payment, error) {
 	c, err := client.NewClient("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
 		panic(err)
@@ -50,7 +73,7 @@ func (p *CreditMessage) CreatePayment(ctx context.Context, request *domain.Payme
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
 		buf := new(bytes.Buffer)
 		io.Copy(buf, res.Body)
-		var result domain.PaymentModel
+		var result domain.Payment
 		json.Unmarshal(buf.Bytes(), &result)
 		return &result, nil
 	}
@@ -58,19 +81,19 @@ func (p *CreditMessage) CreatePayment(ctx context.Context, request *domain.Payme
 }
 
 // 決済データ取得を行うリポジトリ
-func (p *CreditMessage) GetByOrderNo(ctx context.Context, paymentNo string) (*domain.PaymentModel, error) {
+func (p *CreditMessage) GetByOrderNo(ctx context.Context, paymentNo string) (*domain.Payment, error) {
 	fmt.Println("Rest GetByPaymentNo")
 	c, err := client.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
-		return &domain.PaymentModel{}, err
+		return &domain.Payment{}, err
 	}
 
 	// http.Response として返却
 	res, err := c.GetByOrderNoWithResponse(ctx, paymentNo)
 	if err != nil {
-		return &domain.PaymentModel{}, err
+		return &domain.Payment{}, err
 	}
-	var model domain.PaymentModel
+	var model domain.Payment
 	json.NewDecoder(bytes.NewReader(res.Body)).Decode(&model)
 	return &model, err
 }

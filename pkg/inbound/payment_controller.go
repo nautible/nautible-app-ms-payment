@@ -31,18 +31,16 @@ type PaymentController struct {
 	Lock sync.Mutex
 }
 
-var _ *PaymentController = (*PaymentController)(nil)
-
 func NewPaymentController(svc *domain.PaymentService) *PaymentController {
 	return &PaymentController{svc: svc}
 }
 
-func (p *PaymentController) HelthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (p *PaymentController) HelthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Helth Check OK")
 }
 
-func (p *PaymentController) CreateHandler(w http.ResponseWriter, r *http.Request) {
+func (p *PaymentController) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("CreateHandler")
 	fmt.Println(r.Method)
 	switch r.Method {
@@ -54,7 +52,7 @@ func (p *PaymentController) CreateHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (p *PaymentController) RejectCreateHandler(w http.ResponseWriter, r *http.Request) {
+func (p *PaymentController) RejectCreate(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		doRejectCreate(w, r, p.svc)
@@ -84,7 +82,7 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	json.Unmarshal(dec, &restCreatePayment)
 
 	// 入力データの取得
-	var model domain.PaymentModel
+	var model domain.Payment
 	model.RequestId = restCreatePayment.RequestId
 	model.OrderNo = restCreatePayment.OrderNo
 	model.PaymentType = restCreatePayment.PaymentType

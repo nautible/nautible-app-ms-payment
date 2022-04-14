@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -21,8 +22,6 @@ type CreditController struct {
 
 // Make sure we conform to ServerInterface
 
-var _ server.ServerInterface = (*CreditController)(nil)
-
 func NewCreditController(svc *domain.CreditService) *CreditController {
 	return &CreditController{svc: svc}
 }
@@ -36,7 +35,22 @@ func (p *CreditController) Helthz(w http.ResponseWriter, r *http.Request) {
 // Find payments
 // (GET /payment)
 func (p *CreditController) Find(w http.ResponseWriter, r *http.Request, params server.FindParams) {
-	fmt.Fprint(w, string("Find"))
+	w.Header().Set("Content-Type", "application/json")
+	customerId, _ := strconv.Atoi(r.URL.Query().Get("customerId"))
+	orderDateFrom := r.URL.Query().Get("orderDateFrom")
+	orderDateTo := r.URL.Query().Get("orderDateTo")
+	result, err := p.svc.Find(r.Context(), int32(customerId), orderDateFrom, orderDateTo)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	resultJson, err := json.Marshal(result)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(resultJson)
 }
 
 // Create Payment
@@ -47,7 +61,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&req)
 
 	// サービス呼び出し
-	var model domain.PaymentModel
+	var model domain.Payment
 	model.CustomerId = req.CustomerId
 	model.TotalPrice = req.TotalPrice
 	model.OrderDate = req.OrderDate
@@ -105,9 +119,7 @@ func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, orderN
 func (p *CreditController) GetByOrderNo(w http.ResponseWriter, r *http.Request, orderNo string) {
 	id := strings.TrimPrefix(r.URL.Path, "/payment/")
 
-	repo := dynamodb.NewDynamoDbRepository()
-	svc := domain.NewCreditService(repo)
-	result, err := svc.GetPayment(r.Context(), id)
+	result, err := p.svc.GetPayment(r.Context(), id)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
