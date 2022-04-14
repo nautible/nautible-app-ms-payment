@@ -12,8 +12,8 @@ import (
 
 func main() {
 	controller := createController()
-	http.HandleFunc("/payment/", func(w http.ResponseWriter, r *http.Request) {
-		(*controller).IndexHandler(w, r)
+	http.HandleFunc("/helthz", func(w http.ResponseWriter, r *http.Request) {
+		(*controller).HelthCheckHandler(w, r)
 	})
 	http.HandleFunc("/payment/create", func(w http.ResponseWriter, r *http.Request) {
 		(*controller).CreateHandler(w, r)

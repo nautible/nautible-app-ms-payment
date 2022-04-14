@@ -13,6 +13,9 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Credit Service Helth Check
+	// (GET /helthz)
+	Helthz(w http.ResponseWriter, r *http.Request)
 	// Find payments
 	// (GET /payment)
 	Find(w http.ResponseWriter, r *http.Request, params FindParams)
@@ -38,6 +41,21 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+
+// Helthz operation middleware
+func (siw *ServerInterfaceWrapper) Helthz(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Helthz(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
 
 // Find operation middleware
 func (siw *ServerInterfaceWrapper) Find(w http.ResponseWriter, r *http.Request) {
@@ -287,6 +305,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/helthz", wrapper.Helthz)
+	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/payment", wrapper.Find)
 	})

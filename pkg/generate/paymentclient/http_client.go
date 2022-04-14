@@ -90,6 +90,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// Helthz request
+	Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// Find request
 	Find(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -108,6 +111,18 @@ type ClientInterface interface {
 
 	// GetByOrderNo request
 	GetByOrderNo(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHelthzRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) Find(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -192,6 +207,33 @@ func (c *Client) GetByOrderNo(ctx context.Context, orderNo string, reqEditors ..
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewHelthzRequest generates requests for Helthz
+func NewHelthzRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/helthz")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewFindRequest generates requests for Find
@@ -464,6 +506,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// Helthz request
+	HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error)
+
 	// Find request
 	FindWithResponse(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*FindResponse, error)
 
@@ -482,6 +527,27 @@ type ClientWithResponsesInterface interface {
 
 	// GetByOrderNo request
 	GetByOrderNoWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*GetByOrderNoResponse, error)
+}
+
+type HelthzResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r HelthzResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r HelthzResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type FindResponse struct {
@@ -593,6 +659,15 @@ func (r GetByOrderNoResponse) StatusCode() int {
 	return 0
 }
 
+// HelthzWithResponse request returning *HelthzResponse
+func (c *ClientWithResponses) HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error) {
+	rsp, err := c.Helthz(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHelthzResponse(rsp)
+}
+
 // FindWithResponse request returning *FindResponse
 func (c *ClientWithResponses) FindWithResponse(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*FindResponse, error) {
 	rsp, err := c.Find(ctx, params, reqEditors...)
@@ -652,6 +727,22 @@ func (c *ClientWithResponses) GetByOrderNoWithResponse(ctx context.Context, orde
 		return nil, err
 	}
 	return ParseGetByOrderNoResponse(rsp)
+}
+
+// ParseHelthzResponse parses an HTTP response from a HelthzWithResponse call
+func ParseHelthzResponse(rsp *http.Response) (*HelthzResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &HelthzResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
 }
 
 // ParseFindResponse parses an HTTP response from a FindWithResponse call

@@ -5,6 +5,19 @@ info:
 servers:
   - url: http://localhost:8080/
 paths:
+  /helthz:
+    get:
+      tags:
+        - HelthCheckService
+      operationId: helthz
+      summary: Credit Service Helth Check
+      description: Returns a status code
+      responses:
+        200:
+          description: successful operation
+      responses:
+        503:
+          description: Service Unavailable
   /payment/{orderNo}:
     get:
       tags:

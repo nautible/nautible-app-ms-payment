@@ -27,6 +27,12 @@ func NewCreditController(svc *domain.CreditService) *CreditController {
 	return &CreditController{svc: svc}
 }
 
+// Helthz request
+func (p *CreditController) Helthz(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Helth Check OK")
+}
+
 // Find payments
 // (GET /payment)
 func (p *CreditController) Find(w http.ResponseWriter, r *http.Request, params server.FindParams) {

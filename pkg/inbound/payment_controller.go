@@ -37,9 +37,9 @@ func NewPaymentController(svc *domain.PaymentService) *PaymentController {
 	return &PaymentController{svc: svc}
 }
 
-func (p *PaymentController) IndexHandler(w http.ResponseWriter, r *http.Request) {
+func (p *PaymentController) HelthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Hello, IndexHandler")
+	fmt.Fprintf(w, "Helth Check OK")
 }
 
 func (p *PaymentController) CreateHandler(w http.ResponseWriter, r *http.Request) {
