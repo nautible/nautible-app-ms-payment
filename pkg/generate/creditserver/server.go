@@ -13,24 +13,21 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Create Credit
+	// (POST /credit)
+	Create(w http.ResponseWriter, r *http.Request)
+	// Update Credit
+	// (PUT /credit)
+	Update(w http.ResponseWriter, r *http.Request)
+	// Delete credit by acceptNo
+	// (DELETE /credit/{acceptNo})
+	Delete(w http.ResponseWriter, r *http.Request, acceptNo string)
+	// Get credit by accpetNo
+	// (GET /credit/{acceptNo})
+	GetByAcceptNo(w http.ResponseWriter, r *http.Request, acceptNo string)
 	// Credit Service Helth Check
 	// (GET /helthz)
 	Helthz(w http.ResponseWriter, r *http.Request)
-	// Find payments
-	// (GET /payment)
-	Find(w http.ResponseWriter, r *http.Request, params FindParams)
-	// Create Payment
-	// (POST /payment)
-	Create(w http.ResponseWriter, r *http.Request)
-	// Update Payment
-	// (PUT /payment)
-	Update(w http.ResponseWriter, r *http.Request)
-	// Delete payment by orderNo
-	// (DELETE /payment/{orderNo})
-	Delete(w http.ResponseWriter, r *http.Request, orderNo string)
-	// Find order by orderNo
-	// (GET /payment/{orderNo})
-	GetByOrderNo(w http.ResponseWriter, r *http.Request, orderNo string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -41,74 +38,6 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
-
-// Helthz operation middleware
-func (siw *ServerInterfaceWrapper) Helthz(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Helthz(w, r)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
-// Find operation middleware
-func (siw *ServerInterfaceWrapper) Find(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params FindParams
-
-	// ------------- Optional query parameter "customerId" -------------
-	if paramValue := r.URL.Query().Get("customerId"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "customerId", r.URL.Query(), &params.CustomerId)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "customerId", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "orderDateFrom" -------------
-	if paramValue := r.URL.Query().Get("orderDateFrom"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "orderDateFrom", r.URL.Query(), &params.OrderDateFrom)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderDateFrom", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "orderDateTo" -------------
-	if paramValue := r.URL.Query().Get("orderDateTo"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "orderDateTo", r.URL.Query(), &params.OrderDateTo)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderDateTo", Err: err})
-		return
-	}
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Find(w, r, params)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
 
 // Create operation middleware
 func (siw *ServerInterfaceWrapper) Create(w http.ResponseWriter, r *http.Request) {
@@ -146,17 +75,17 @@ func (siw *ServerInterfaceWrapper) Delete(w http.ResponseWriter, r *http.Request
 
 	var err error
 
-	// ------------- Path parameter "orderNo" -------------
-	var orderNo string
+	// ------------- Path parameter "acceptNo" -------------
+	var acceptNo string
 
-	err = runtime.BindStyledParameter("simple", false, "orderNo", chi.URLParam(r, "orderNo"), &orderNo)
+	err = runtime.BindStyledParameter("simple", false, "acceptNo", chi.URLParam(r, "acceptNo"), &acceptNo)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderNo", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "acceptNo", Err: err})
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Delete(w, r, orderNo)
+		siw.Handler.Delete(w, r, acceptNo)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -166,23 +95,38 @@ func (siw *ServerInterfaceWrapper) Delete(w http.ResponseWriter, r *http.Request
 	handler(w, r.WithContext(ctx))
 }
 
-// GetByOrderNo operation middleware
-func (siw *ServerInterfaceWrapper) GetByOrderNo(w http.ResponseWriter, r *http.Request) {
+// GetByAcceptNo operation middleware
+func (siw *ServerInterfaceWrapper) GetByAcceptNo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "orderNo" -------------
-	var orderNo string
+	// ------------- Path parameter "acceptNo" -------------
+	var acceptNo string
 
-	err = runtime.BindStyledParameter("simple", false, "orderNo", chi.URLParam(r, "orderNo"), &orderNo)
+	err = runtime.BindStyledParameter("simple", false, "acceptNo", chi.URLParam(r, "acceptNo"), &acceptNo)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderNo", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "acceptNo", Err: err})
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetByOrderNo(w, r, orderNo)
+		siw.Handler.GetByAcceptNo(w, r, acceptNo)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// Helthz operation middleware
+func (siw *ServerInterfaceWrapper) Helthz(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Helthz(w, r)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -306,22 +250,19 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/credit", wrapper.Create)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/credit", wrapper.Update)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/credit/{acceptNo}", wrapper.Delete)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/credit/{acceptNo}", wrapper.GetByAcceptNo)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/helthz", wrapper.Helthz)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/payment", wrapper.Find)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/payment", wrapper.Create)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/payment", wrapper.Update)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/payment/{orderNo}", wrapper.Delete)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/payment/{orderNo}", wrapper.GetByOrderNo)
 	})
 
 	return r

@@ -90,12 +90,6 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// Helthz request
-	Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// Find request
-	Find(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// Create request with any body
 	CreateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -107,34 +101,13 @@ type ClientInterface interface {
 	Update(ctx context.Context, body UpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Delete request
-	Delete(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	Delete(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetByOrderNo request
-	GetByOrderNo(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
-}
+	// GetByAcceptNo request
+	GetByAcceptNo(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-func (c *Client) Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewHelthzRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) Find(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewFindRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
+	// Helthz request
+	Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) CreateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -185,8 +158,8 @@ func (c *Client) Update(ctx context.Context, body UpdateJSONRequestBody, reqEdit
 	return c.Client.Do(req)
 }
 
-func (c *Client) Delete(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteRequest(c.Server, orderNo)
+func (c *Client) Delete(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteRequest(c.Server, acceptNo)
 	if err != nil {
 		return nil, err
 	}
@@ -197,8 +170,8 @@ func (c *Client) Delete(ctx context.Context, orderNo string, reqEditors ...Reque
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetByOrderNo(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetByOrderNoRequest(c.Server, orderNo)
+func (c *Client) GetByAcceptNo(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetByAcceptNoRequest(c.Server, acceptNo)
 	if err != nil {
 		return nil, err
 	}
@@ -209,110 +182,16 @@ func (c *Client) GetByOrderNo(ctx context.Context, orderNo string, reqEditors ..
 	return c.Client.Do(req)
 }
 
-// NewHelthzRequest generates requests for Helthz
-func NewHelthzRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
+func (c *Client) Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHelthzRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
-
-	operationPath := fmt.Sprintf("/helthz")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewFindRequest generates requests for Find
-func NewFindRequest(server string, params *FindParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/payment")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	queryValues := queryURL.Query()
-
-	if params.CustomerId != nil {
-
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "customerId", runtime.ParamLocationQuery, *params.CustomerId); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
-			}
-		}
-
-	}
-
-	if params.OrderDateFrom != nil {
-
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderDateFrom", runtime.ParamLocationQuery, *params.OrderDateFrom); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
-			}
-		}
-
-	}
-
-	if params.OrderDateTo != nil {
-
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderDateTo", runtime.ParamLocationQuery, *params.OrderDateTo); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
-			}
-		}
-
-	}
-
-	queryURL.RawQuery = queryValues.Encode()
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
+	return c.Client.Do(req)
 }
 
 // NewCreateRequest calls the generic Create builder with application/json body
@@ -335,7 +214,7 @@ func NewCreateRequestWithBody(server string, contentType string, body io.Reader)
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/payment")
+	operationPath := fmt.Sprintf("/credit")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -375,7 +254,7 @@ func NewUpdateRequestWithBody(server string, contentType string, body io.Reader)
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/payment")
+	operationPath := fmt.Sprintf("/credit")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -396,12 +275,12 @@ func NewUpdateRequestWithBody(server string, contentType string, body io.Reader)
 }
 
 // NewDeleteRequest generates requests for Delete
-func NewDeleteRequest(server string, orderNo string) (*http.Request, error) {
+func NewDeleteRequest(server string, acceptNo string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orderNo", runtime.ParamLocationPath, orderNo)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "acceptNo", runtime.ParamLocationPath, acceptNo)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +290,7 @@ func NewDeleteRequest(server string, orderNo string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/payment/%s", pathParam0)
+	operationPath := fmt.Sprintf("/credit/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -429,13 +308,13 @@ func NewDeleteRequest(server string, orderNo string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetByOrderNoRequest generates requests for GetByOrderNo
-func NewGetByOrderNoRequest(server string, orderNo string) (*http.Request, error) {
+// NewGetByAcceptNoRequest generates requests for GetByAcceptNo
+func NewGetByAcceptNoRequest(server string, acceptNo string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "orderNo", runtime.ParamLocationPath, orderNo)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "acceptNo", runtime.ParamLocationPath, acceptNo)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +324,34 @@ func NewGetByOrderNoRequest(server string, orderNo string) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/payment/%s", pathParam0)
+	operationPath := fmt.Sprintf("/credit/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewHelthzRequest generates requests for Helthz
+func NewHelthzRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/helthz")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -506,12 +412,6 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// Helthz request
-	HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error)
-
-	// Find request
-	FindWithResponse(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*FindResponse, error)
-
 	// Create request with any body
 	CreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateResponse, error)
 
@@ -523,59 +423,19 @@ type ClientWithResponsesInterface interface {
 	UpdateWithResponse(ctx context.Context, body UpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateResponse, error)
 
 	// Delete request
-	DeleteWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error)
+	DeleteWithResponse(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error)
 
-	// GetByOrderNo request
-	GetByOrderNoWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*GetByOrderNoResponse, error)
-}
+	// GetByAcceptNo request
+	GetByAcceptNoWithResponse(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*GetByAcceptNoResponse, error)
 
-type HelthzResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r HelthzResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r HelthzResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type FindResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]RestPayment
-}
-
-// Status returns HTTPResponse.Status
-func (r FindResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r FindResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
+	// Helthz request
+	HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error)
 }
 
 type CreateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *RestPayment
+	JSON200      *RestCreditPayment
 }
 
 // Status returns HTTPResponse.Status
@@ -597,7 +457,7 @@ func (r CreateResponse) StatusCode() int {
 type UpdateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *RestPayment
+	JSON200      *RestCreditPayment
 }
 
 // Status returns HTTPResponse.Status
@@ -637,14 +497,14 @@ func (r DeleteResponse) StatusCode() int {
 	return 0
 }
 
-type GetByOrderNoResponse struct {
+type GetByAcceptNoResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *RestPayment
+	JSON200      *RestCreditPayment
 }
 
 // Status returns HTTPResponse.Status
-func (r GetByOrderNoResponse) Status() string {
+func (r GetByAcceptNoResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -652,29 +512,32 @@ func (r GetByOrderNoResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetByOrderNoResponse) StatusCode() int {
+func (r GetByAcceptNoResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// HelthzWithResponse request returning *HelthzResponse
-func (c *ClientWithResponses) HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error) {
-	rsp, err := c.Helthz(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseHelthzResponse(rsp)
+type HelthzResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
 }
 
-// FindWithResponse request returning *FindResponse
-func (c *ClientWithResponses) FindWithResponse(ctx context.Context, params *FindParams, reqEditors ...RequestEditorFn) (*FindResponse, error) {
-	rsp, err := c.Find(ctx, params, reqEditors...)
-	if err != nil {
-		return nil, err
+// Status returns HTTPResponse.Status
+func (r HelthzResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
 	}
-	return ParseFindResponse(rsp)
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r HelthzResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 // CreateWithBodyWithResponse request with arbitrary body returning *CreateResponse
@@ -712,63 +575,30 @@ func (c *ClientWithResponses) UpdateWithResponse(ctx context.Context, body Updat
 }
 
 // DeleteWithResponse request returning *DeleteResponse
-func (c *ClientWithResponses) DeleteWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error) {
-	rsp, err := c.Delete(ctx, orderNo, reqEditors...)
+func (c *ClientWithResponses) DeleteWithResponse(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*DeleteResponse, error) {
+	rsp, err := c.Delete(ctx, acceptNo, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseDeleteResponse(rsp)
 }
 
-// GetByOrderNoWithResponse request returning *GetByOrderNoResponse
-func (c *ClientWithResponses) GetByOrderNoWithResponse(ctx context.Context, orderNo string, reqEditors ...RequestEditorFn) (*GetByOrderNoResponse, error) {
-	rsp, err := c.GetByOrderNo(ctx, orderNo, reqEditors...)
+// GetByAcceptNoWithResponse request returning *GetByAcceptNoResponse
+func (c *ClientWithResponses) GetByAcceptNoWithResponse(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*GetByAcceptNoResponse, error) {
+	rsp, err := c.GetByAcceptNo(ctx, acceptNo, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetByOrderNoResponse(rsp)
+	return ParseGetByAcceptNoResponse(rsp)
 }
 
-// ParseHelthzResponse parses an HTTP response from a HelthzWithResponse call
-func ParseHelthzResponse(rsp *http.Response) (*HelthzResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+// HelthzWithResponse request returning *HelthzResponse
+func (c *ClientWithResponses) HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error) {
+	rsp, err := c.Helthz(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-
-	response := &HelthzResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseFindResponse parses an HTTP response from a FindWithResponse call
-func ParseFindResponse(rsp *http.Response) (*FindResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &FindResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RestPayment
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
+	return ParseHelthzResponse(rsp)
 }
 
 // ParseCreateResponse parses an HTTP response from a CreateWithResponse call
@@ -786,7 +616,7 @@ func ParseCreateResponse(rsp *http.Response) (*CreateResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RestPayment
+		var dest RestCreditPayment
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -812,7 +642,7 @@ func ParseUpdateResponse(rsp *http.Response) (*UpdateResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RestPayment
+		var dest RestCreditPayment
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -839,27 +669,43 @@ func ParseDeleteResponse(rsp *http.Response) (*DeleteResponse, error) {
 	return response, nil
 }
 
-// ParseGetByOrderNoResponse parses an HTTP response from a GetByOrderNoWithResponse call
-func ParseGetByOrderNoResponse(rsp *http.Response) (*GetByOrderNoResponse, error) {
+// ParseGetByAcceptNoResponse parses an HTTP response from a GetByAcceptNoWithResponse call
+func ParseGetByAcceptNoResponse(rsp *http.Response) (*GetByAcceptNoResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetByOrderNoResponse{
+	response := &GetByAcceptNoResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RestPayment
+		var dest RestCreditPayment
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseHelthzResponse parses an HTTP response from a HelthzWithResponse call
+func ParseHelthzResponse(rsp *http.Response) (*HelthzResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &HelthzResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil

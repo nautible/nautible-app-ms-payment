@@ -45,7 +45,7 @@ func main() {
 
 func createController() *controller.CreditController {
 
-	repo := dynamodb.NewDynamoDbRepository()
+	repo := dynamodb.NewCreditRepository()
 	svc := domain.NewCreditService(repo)
 
 	creditController := controller.NewCreditController(svc)

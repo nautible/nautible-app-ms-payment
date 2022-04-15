@@ -25,9 +25,9 @@ func main() {
 }
 
 func createController() *controller.PaymentController {
-	paymentRepository := dynamodb.NewDynamoDbRepository()
-	creditMessage := rest.NewCreditMessage()
-	orderMessage := rest.NewOrderMessage()
+	paymentRepository := dynamodb.NewPaymentRepository()
+	creditMessage := rest.NewCreditMessageSender()
+	orderMessage := rest.NewOrderMessageSender()
 	service := domain.NewPaymentService(&paymentRepository, &creditMessage, &orderMessage)
 	controller := controller.NewPaymentController(service)
 	return controller

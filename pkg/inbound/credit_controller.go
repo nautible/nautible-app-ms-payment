@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 	"sync"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
@@ -15,8 +13,8 @@ import (
 
 type CreditController struct {
 	svc               *domain.CreditService
-	RestPayment       server.RestPayment
-	RestUpdatePayment server.RestUpdatePayment
+	RestPayment       server.RestCreditPayment
+	RestUpdatePayment server.RestUpdateCreditPayment
 	Lock              sync.Mutex
 }
 
@@ -32,56 +30,32 @@ func (p *CreditController) Helthz(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Helth Check OK")
 }
 
-// Find payments
-// (GET /payment)
-func (p *CreditController) Find(w http.ResponseWriter, r *http.Request, params server.FindParams) {
-	w.Header().Set("Content-Type", "application/json")
-	customerId, _ := strconv.Atoi(r.URL.Query().Get("customerId"))
-	orderDateFrom := r.URL.Query().Get("orderDateFrom")
-	orderDateTo := r.URL.Query().Get("orderDateTo")
-	result, err := p.svc.Find(r.Context(), int32(customerId), orderDateFrom, orderDateTo)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	resultJson, err := json.Marshal(result)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(resultJson)
-}
-
-// Create Payment
-// (POST /payment)
+// Create Credit
+// (POST /credit)
 func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var req server.RestCreatePayment
+	var req server.RestCreateCreditPayment
 	json.NewDecoder(r.Body).Decode(&req)
 
 	// サービス呼び出し
-	var model domain.Payment
+	var model domain.CreditPayment
+	model.OrderNo = req.OrderNo
+	model.OrderDate = req.OrderDate
 	model.CustomerId = req.CustomerId
 	model.TotalPrice = req.TotalPrice
-	model.OrderDate = req.OrderDate
-	model.OrderNo = req.OrderNo
 	service := *p.svc
-	res, err := service.CreatePayment(r.Context(), &model)
+	res, err := service.CreateCreditPayment(r.Context(), &model)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	var result server.RestPayment
+	var result server.RestCreditPayment
 	result.AcceptNo = &res.AcceptNo
+	result.AcceptDate = &res.AcceptDate
 	result.CustomerId = &res.CustomerId
 	result.OrderDate = &res.OrderDate
 	result.OrderNo = &res.OrderNo
-	result.OrderStatus = &res.OrderStatus
-	result.PaymentNo = &res.PaymentNo
-	result.ReceiptDate = &res.ReceiptDate
 	result.TotalPrice = &res.TotalPrice
-	result.RequestId = &req.RequestId
 	resultJson, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println(err)
@@ -95,18 +69,17 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 // (PUT /payment/)
 func (p *CreditController) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(p.RestUpdatePayment)
-	fmt.Fprint(w, string("Update"))
+	fmt.Fprint(w, string("Update No Operation"))
 }
 
-// Delete payment by orderNo
-// (DELETE /payment/{orderNo})
-func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, orderNo string) {
-	id := strings.TrimPrefix(r.URL.Path, "/payment/")
-	fmt.Fprint(w, string("Delete : "+id))
+// Delete credit by AcceptNo
+// (DELETE /credit/{acceptNo})
+func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, acceptNo string) {
+	fmt.Fprint(w, string("Delete : "+acceptNo))
 
-	repo := dynamodb.NewDynamoDbRepository()
+	repo := dynamodb.NewCreditRepository()
 	svc := domain.NewCreditService(repo)
-	err := svc.DeletePayment(r.Context(), id)
+	err := svc.DeleteCreditPayment(r.Context(), acceptNo)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -114,12 +87,10 @@ func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, orderN
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Find order by OrderNo
-// (GET /payment/{orderNo})
-func (p *CreditController) GetByOrderNo(w http.ResponseWriter, r *http.Request, orderNo string) {
-	id := strings.TrimPrefix(r.URL.Path, "/payment/")
-
-	result, err := p.svc.GetPayment(r.Context(), id)
+// Find credit by AcceptNo
+// (GET /credit/{acceptNo})
+func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request, acceptNo string) {
+	result, err := p.svc.GetCreditPayment(r.Context(), acceptNo)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

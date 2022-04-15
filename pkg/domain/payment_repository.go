@@ -2,7 +2,7 @@ package domain
 
 import "context"
 
-// Payment,PaymentHistoryテーブルにアクセスするリポジトリインターフェース
+// Paymentテーブルにアクセスするリポジトリインターフェース
 type PaymentRepository interface {
 	FindPaymentItem(context.Context, int32, string, string) ([]*Payment, error)
 	PutPaymentItem(context.Context, *Payment) (*Payment, error)

@@ -10,15 +10,15 @@ import (
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
 )
 
-type OrderMessage struct{}
+type OrderMessageSender struct{}
 
-func NewOrderMessage() domain.OrderMessageSender {
-	orderMessage := OrderMessage{}
-	return &orderMessage
+func NewOrderMessageSender() domain.OrderMessageService {
+	orderMessageSender := OrderMessageSender{}
+	return &orderMessageSender
 }
 
 // Orderサービスにリクエストするリポジトリインターフェース
-func (p *OrderMessage) Publish(ctx context.Context, response *domain.Order) error {
+func (p *OrderMessageSender) Send(ctx context.Context, response interface{}) error {
 	url := "http://localhost:3500/v1.0/publish/order-pubsub/create-order-reply"
 	requestJson, err := json.Marshal(response)
 	if err != nil {
