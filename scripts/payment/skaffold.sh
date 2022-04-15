@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd ../../
-skaffold dev --filename=./scripts/payment/skaffold.yaml
+skaffold dev --filename=./scripts/payment/skaffold.yaml $1
