@@ -1,29 +1,33 @@
 # 動作確認用テストデータ
 
-# Cash APP
+## 決済データ
+
+- 決済サービスを起動し、ポートフォワード
+- クレジットサービスを起動（paymentType:01の場合、呼び出されるため）
+
+```bash
+cd scripts/payment
+./skaffold.sh --port-forward
+cd ../credit
+./skaffold.sh
+```
 
 ## データ作成
 
-```
-$ curl http://localhost:8080/payment/ -D - -X POST -i -H "Content-Type: application/json" -d "{\"orderNo\": \"1111-2222-3333-4444\", \"orderDate\": \"2021/03/01\", \"customerId\": 1, \"totalPrice\": 1300}"
+クレジット決済
+
+```bash
+curl http://localhost:8080/payment/create \
+    -H "Content-Type: application/cloudevents+json" \
+    -d '{"datacontenttype":"application/json","id":"42","source":"curl","type":"http request","specversion":"1.0", "data":"{\"requestId\":\"O0000000001\",\"orderDate\":\"2022-01-02T03:04:05\",\"customerId\":1,\"totalPrice\":10000,\"paymentType\":\"01\",\"orderNo\":\"O0000000001\"}"}'
 ```
 
-## データ更新
+現金代引き
 
-```
-curl http://localhost:8080/payment/ -D - -X PUT -i -H "Content-Type: application/json" -d "{\"orderNo\": 1, \"orderDate\": \"2021/03/01\", \"customerId\": 1, \"totalPrice\": 1300, \"productPrice\": 1000, \"tax\": 100, \"deliveryFee\": 200, \"orderStatus\": \"PROCESS\", \"orderDetail\": [{\"id\": 1, \"price\": 400, \"count\": 1},{\"id\": 2, \"price\": 600, \"count\": 1}], \"payment\": {\"paymentId\": \"DAIBIKI\"}, \"destination\": {\"zipCode\": \"583-0017\", \"address1\": \"osaka\", \"address2\": \"senri\", \"tel\": \"111-1111-1111\"}}"
-```
-
-## 検索
-
-```
-curl "http://localhost:8080/payment?customerId=1&orderDateFrom=2021-01-01&orderDateTo=2023-04-01" -D -
-```
-
-## ID指定
-
-```
-curl http://localhost:8080/payment/1 -D -
+```bash
+curl http://localhost:8080/payment/create \
+    -H "Content-Type: application/cloudevents+json" \
+    -d '{"datacontenttype":"application/json","id":"42","source":"curl","type":"http request","specversion":"1.0", "data":"{\"requestId\":\"O0000000002\",\"orderDate\":\"2022-01-02T03:04:05\",\"customerId\":1,\"totalPrice\":10000,\"paymentType\":\"02\",\"orderNo\":\"O0000000002\"}"}'
 ```
 
 ## データ削除
@@ -32,9 +36,45 @@ curl http://localhost:8080/payment/1 -D -
 curl http://localhost:8080/payment/1 -X DELETE -D -
 ```
 
+## クレジットデータ
+
+- 決済サービスの起動（local-stackを起動するため）
+- クレジットサービスを起動し、ポートフォワード
+
+```bash
+cd scripts/payment
+./skaffold.sh
+cd ../credit
+./skaffold.sh --port-forward
+```
+
+### データの作成
+
+データは"A"+10桁の連番で登録されている
+
+```bash
+ curl -X POST "http://localhost:8080/credit/A0000000001" -D -
+```
+
+### データの確認
+
+データは"A"+10桁の連番で登録されている
+
+```bash
+ curl "http://localhost:8080/credit/A0000000001" -D -
+```
+
+### データの削除
+
+```bash
+ curl -X DELETE "http://localhost:8080/credit/A0000000001" -D -
+```
 
 ## local-stackのDynamoDBデータ確認
 
-```
-aws dynamodb scan --table-name Payment --endpoint-url http://localhost:4566
+```bash
+kubectl port-forward svc/payment-localstack -n nautible-app-ms 4566:4566
+aws dynamodb scan --table-name Payment --endpoint-url http://localhost:14566
+aws dynamodb scan --table-name CreditPayment --endpoint-url http://localhost:4566
+aws dynamodb scan --table-name Sequence --endpoint-url http://localhost:4566
 ```
