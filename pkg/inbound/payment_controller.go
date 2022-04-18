@@ -23,6 +23,7 @@ type CloudEvents struct {
 	Datacontenttype string `json:"datacontenttype"`
 	Type            string `json:"type"`
 	Traceid         string `json:"traceid"`
+	Data            string `json:"data"`
 	DataBase64      string `json:"data_base64"`
 }
 
@@ -67,19 +68,26 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	body := r.Body
 	defer body.Close()
 
-	// CloudEventsで受け取ったバイナリデータ（Base64）を構造体にマッピング
+	// CloudEventsで受け取ったデータを構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
+	fmt.Println("request : " + buf.String())
 	var cloudEvents CloudEvents
 	var restCreatePayment server.RestCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
-	dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if cloudEvents.Data != "" {
+		dec := []byte(cloudEvents.Data)
+		json.Unmarshal(dec, &restCreatePayment)
 	}
-	json.Unmarshal(dec, &restCreatePayment)
+	if cloudEvents.DataBase64 != "" {
+		dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		json.Unmarshal(dec, &restCreatePayment)
+	}
 
 	// 入力データの取得
 	var model domain.Payment
@@ -104,19 +112,26 @@ func doRejectCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentS
 	// CloudEventsで受け取ったバイナリデータ（Base64）を構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
+	fmt.Println("request : " + buf.String())
 	var cloudEvents CloudEvents
-	var restCancelPayment server.RestCancelPayment
+	var restRejectCreatePayment server.RestRejectCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
-	dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if cloudEvents.Data != "" {
+		dec := []byte(cloudEvents.Data)
+		json.Unmarshal(dec, &restRejectCreatePayment)
 	}
-	json.Unmarshal(dec, &restCancelPayment)
+	if cloudEvents.DataBase64 != "" {
+		dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		json.Unmarshal(dec, &restRejectCreatePayment)
+	}
 
 	// 決済削除サービス呼び出し
-	(*svc).DeleteByOrderNo(r.Context(), restCancelPayment.PaymentType, restCancelPayment.OrderNo)
+	(*svc).DeleteByOrderNo(r.Context(), restRejectCreatePayment.OrderNo)
 
 	w.WriteHeader(http.StatusOK)
 }

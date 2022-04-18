@@ -21,22 +21,6 @@ paths:
         200:
           description: successful operation
           content: {}
-  /payment/cancel:
-    post:
-      tags:
-        - RestCancelPaymentService
-      operationId: cancel
-      summary: Cancel Payment for SAGA
-      description: Cancel Payment for SAGA
-      requestBody:
-        content:
-          application/json:
-              schema:
-                $ref: "#/components/schemas/RestCancelPayment"
-      responses:
-        200:
-          description: successful operation
-          content: {}
   /payment/rejectCreate:
     post:
       tags:
@@ -86,38 +70,12 @@ components:
         paymentType:
           type: string
           example: "01"
-    RestCancelPayment:
-      type: object
-      required:
-        - requestId
-        - cancelDate
-        - customerId
-        - paymentType
-        - orderNo
-      properties:
-        requestId:
-          description: 処理要求を一意に表すリクエストId。
-          type: string
-          example: O0000000001
-        orderNo:
-          type: string
-          example: "1111-2222-3333-4444"
-        cancelDate:
-          type: string
-          example: 2021/01/01 10:11:12
-        customerId:
-          type: integer
-          format: int32
-          example: 123
-        paymentType:
-          type: string
-          example: "01"
     RestRejectCreatePayment:
       type: object
       required:
-        - requestId
+        - orderNo
       properties:
-        requestId:
+        orderNo:
           description: 処理要求を一意に表すリクエストId。
           type: string
           example: O0000000001

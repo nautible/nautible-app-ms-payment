@@ -22,7 +22,7 @@ func NewPaymentRepository() domain.PaymentRepository {
 	return &dynamoDb{db: db}
 }
 
-func (p *dynamoDb) FindPaymentItem(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
+func (p *dynamoDb) FindPayment(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
 	var payments []*domain.Payment
 	table := p.db.Table("Payment")
 
@@ -34,7 +34,7 @@ func (p *dynamoDb) FindPaymentItem(ctx context.Context, customerId int32, orderD
 }
 
 // 決済データの登録
-func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
+func (p *dynamoDb) PutPayment(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
@@ -44,7 +44,7 @@ func (p *dynamoDb) PutPaymentItem(ctx context.Context, model *domain.Payment) (*
 }
 
 // OrderNoに該当する決済データを取得
-func (p *dynamoDb) GetPaymentItem(ctx context.Context, orderNo string) (*domain.Payment, error) {
+func (p *dynamoDb) GetPayment(ctx context.Context, orderNo string) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	var result domain.Payment
 	if err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result); err != nil {
@@ -57,7 +57,7 @@ func (p *dynamoDb) GetPaymentItem(ctx context.Context, orderNo string) (*domain.
 }
 
 // orderNoに該当する決済データ論理を削除
-func (p *dynamoDb) DeletePaymentItem(ctx context.Context, orderNo string) error {
+func (p *dynamoDb) DeletePayment(ctx context.Context, orderNo string) error {
 	table := p.db.Table("Payment")
 
 	var result domain.Payment

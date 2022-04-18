@@ -73,26 +73,27 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 }
 
 func (svc *PaymentService) Find(ctx context.Context, paymentType string, customerId int32, orderDateFrom string, orderDateTo string) ([]*Payment, error) {
-	return (*svc.payment).FindPaymentItem(ctx, customerId, orderDateFrom, orderDateTo)
+	return (*svc.payment).FindPayment(ctx, customerId, orderDateFrom, orderDateTo)
 }
 
 func (svc *PaymentService) GetByOrderNo(ctx context.Context, paymentType string, orderNo string) (*Payment, error) {
-	return (*svc.payment).GetPaymentItem(ctx, orderNo)
+	return (*svc.payment).GetPayment(ctx, orderNo)
 }
 
-func (svc *PaymentService) DeleteByOrderNo(ctx context.Context, paymentType string, orderNo string) error {
-	if paymentType == string(TypeCredit) {
-		payment, err := (*svc.payment).GetPaymentItem(ctx, orderNo)
-		if err != nil {
-			return err
-		}
+func (svc *PaymentService) DeleteByOrderNo(ctx context.Context, orderNo string) error {
+	payment, err := (*svc.payment).GetPayment(ctx, orderNo)
+	if err != nil {
+		return err
+	}
+	fmt.Println("OrderNo:" + payment.OrderNo)
+	if payment.PaymentType == string(TypeCredit) {
 		// クレジット情報削除
 		if err := (*svc.credit).DeleteByAcceptNo(ctx, payment.AcceptNo); err != nil {
 			return err
 		}
 	}
 	// 決済情報削除
-	return (*svc.payment).DeletePaymentItem(ctx, orderNo)
+	return (*svc.payment).DeletePayment(ctx, orderNo)
 }
 
 func validate(paymentModel *Payment) string {
@@ -167,7 +168,7 @@ func createPayment(ctx context.Context, svc *PaymentService, model *Payment) *Or
 	}
 	model.PaymentNo = fmt.Sprintf("P%010d", *paymentNo) // dummy 支払い番号はP始まりとする
 	model.DeleteFlag = false
-	res, err := (*svc.payment).PutPaymentItem(ctx, model)
+	res, err := (*svc.payment).PutPayment(ctx, model)
 	if err != nil {
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId

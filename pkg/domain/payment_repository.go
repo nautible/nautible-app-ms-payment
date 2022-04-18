@@ -4,10 +4,10 @@ import "context"
 
 // Paymentテーブルにアクセスするリポジトリインターフェース
 type PaymentRepository interface {
-	FindPaymentItem(context.Context, int32, string, string) ([]*Payment, error)
-	PutPaymentItem(context.Context, *Payment) (*Payment, error)
-	GetPaymentItem(context.Context, string) (*Payment, error)
-	DeletePaymentItem(context.Context, string) error
+	FindPayment(context.Context, int32, string, string) ([]*Payment, error)
+	PutPayment(context.Context, *Payment) (*Payment, error)
+	GetPayment(context.Context, string) (*Payment, error)
+	DeletePayment(context.Context, string) error
 	PutPaymentHistory(context.Context, *Payment) error
 	Sequence(context.Context) (*int, error)
 }

@@ -95,6 +95,10 @@ func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request,
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+	if result == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	resultJson, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println(err)
