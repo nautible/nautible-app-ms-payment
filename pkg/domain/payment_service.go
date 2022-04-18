@@ -25,11 +25,11 @@ type ErrorDetail struct {
 
 type PaymentService struct {
 	payment *PaymentRepository
-	credit  *CreditMessageService
-	order   *OrderMessageService
+	credit  *CreditMessage
+	order   *OrderMessage
 }
 
-func NewPaymentService(payment *PaymentRepository, credit *CreditMessageService, order *OrderMessageService) *PaymentService {
+func NewPaymentService(payment *PaymentRepository, credit *CreditMessage, order *OrderMessage) *PaymentService {
 	return &PaymentService{payment, credit, order}
 }
 
@@ -43,7 +43,7 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 		orderResponse.RequestId = model.RequestId
 		orderResponse.Message = result
 		orderResponse.Status = http.StatusBadRequest
-		(*svc.order).Send(ctx, &orderResponse)
+		(*svc.order).Publish(ctx, &orderResponse)
 		fmt.Println(orderResponse.Message)
 		return
 	}
@@ -61,7 +61,7 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 			orderResponse.Status = http.StatusInternalServerError
 			orderResponse.Message = messsageFormat(err.Error())
 		}
-		(*svc.order).Send(ctx, &orderResponse)
+		(*svc.order).Publish(ctx, &orderResponse)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 	orderResponse = *createPayment(ctx, svc, model)
 
 	// レスポンスをOrderに送信
-	(*svc.order).Send(ctx, &orderResponse)
+	(*svc.order).Publish(ctx, &orderResponse)
 }
 
 func (svc *PaymentService) Find(ctx context.Context, paymentType string, customerId int32, orderDateFrom string, orderDateTo string) ([]*Payment, error) {

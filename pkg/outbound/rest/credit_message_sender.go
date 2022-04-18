@@ -16,7 +16,7 @@ import (
 
 type CreditMessageSender struct{}
 
-func NewCreditMessageSender() domain.CreditMessageService {
+func NewCreditMessageSender() domain.CreditMessage {
 	creditMessageSender := CreditMessageSender{}
 	return &creditMessageSender
 }

@@ -12,13 +12,13 @@ import (
 
 type OrderMessageSender struct{}
 
-func NewOrderMessageSender() domain.OrderMessageService {
+func NewOrderMessageSender() domain.OrderMessage {
 	orderMessageSender := OrderMessageSender{}
 	return &orderMessageSender
 }
 
 // Orderサービスにリクエストするリポジトリインターフェース
-func (p *OrderMessageSender) Send(ctx context.Context, response interface{}) error {
+func (p *OrderMessageSender) Publish(ctx context.Context, response interface{}) error {
 	url := "http://localhost:3500/v1.0/publish/order-pubsub/create-order-reply"
 	requestJson, err := json.Marshal(response)
 	if err != nil {
