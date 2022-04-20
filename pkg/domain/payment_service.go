@@ -24,13 +24,13 @@ type ErrorDetail struct {
 }
 
 type PaymentService struct {
-	payment *PaymentRepository
-	credit  *CreditMessage
-	order   *OrderMessage
+	payment PaymentRepository
+	credit  CreditMessage
+	order   OrderMessage
 }
 
 func NewPaymentService(payment *PaymentRepository, credit *CreditMessage, order *OrderMessage) *PaymentService {
-	return &PaymentService{payment, credit, order}
+	return &PaymentService{*payment, *credit, *order}
 }
 
 // バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
@@ -43,13 +43,12 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 		orderResponse.RequestId = model.RequestId
 		orderResponse.Message = result
 		orderResponse.Status = http.StatusBadRequest
-		(*svc.order).Publish(ctx, &orderResponse)
-		fmt.Println(orderResponse.Message)
+		svc.order.Publish(ctx, &orderResponse)
 		return
 	}
 
 	// 冪等性担保 履歴テーブルへの登録
-	if err := (*svc.payment).PutPaymentHistory(ctx, model); err != nil {
+	if err := svc.payment.PutPaymentHistory(ctx, model); err != nil {
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId
 		if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
@@ -61,7 +60,7 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 			orderResponse.Status = http.StatusInternalServerError
 			orderResponse.Message = messsageFormat(err.Error())
 		}
-		(*svc.order).Publish(ctx, &orderResponse)
+		svc.order.Publish(ctx, &orderResponse)
 		return
 	}
 
@@ -69,31 +68,34 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 	orderResponse = *createPayment(ctx, svc, model)
 
 	// レスポンスをOrderに送信
-	(*svc.order).Publish(ctx, &orderResponse)
+	svc.order.Publish(ctx, &orderResponse)
 }
 
 func (svc *PaymentService) Find(ctx context.Context, paymentType string, customerId int32, orderDateFrom string, orderDateTo string) ([]*Payment, error) {
-	return (*svc.payment).FindPayment(ctx, customerId, orderDateFrom, orderDateTo)
+	return svc.payment.FindPayment(ctx, customerId, orderDateFrom, orderDateTo)
 }
 
 func (svc *PaymentService) GetByOrderNo(ctx context.Context, paymentType string, orderNo string) (*Payment, error) {
-	return (*svc.payment).GetPayment(ctx, orderNo)
+	return svc.payment.GetPayment(ctx, orderNo)
 }
 
 func (svc *PaymentService) DeleteByOrderNo(ctx context.Context, orderNo string) error {
-	payment, err := (*svc.payment).GetPayment(ctx, orderNo)
+	payment, err := svc.payment.GetPayment(ctx, orderNo)
 	if err != nil {
 		return err
 	}
-	fmt.Println("OrderNo:" + payment.OrderNo)
+	if payment == nil {
+		// 削除対象なし
+		return nil
+	}
 	if payment.PaymentType == string(TypeCredit) {
 		// クレジット情報削除
-		if err := (*svc.credit).DeleteByAcceptNo(ctx, payment.AcceptNo); err != nil {
+		if err := svc.credit.DeleteByAcceptNo(ctx, payment.AcceptNo); err != nil {
 			return err
 		}
 	}
 	// 決済情報削除
-	return (*svc.payment).DeletePayment(ctx, orderNo)
+	return svc.payment.DeletePayment(ctx, orderNo)
 }
 
 func validate(paymentModel *Payment) string {
@@ -147,7 +149,7 @@ func createPayment(ctx context.Context, svc *PaymentService, model *Payment) *Or
 		creditModel.OrderDate = model.OrderDate
 		creditModel.CustomerId = model.CustomerId
 		creditModel.TotalPrice = model.TotalPrice
-		creditResponse, err := (*svc.credit).CreateCreditPayment(ctx, &creditModel)
+		creditResponse, err := svc.credit.CreateCreditPayment(ctx, &creditModel)
 		if err != nil {
 			orderResponse.ProcessType = string(TypePayment)
 			orderResponse.RequestId = model.RequestId
@@ -158,7 +160,7 @@ func createPayment(ctx context.Context, svc *PaymentService, model *Payment) *Or
 		model.AcceptNo = creditResponse.AcceptNo
 		model.AcceptDate = creditModel.AcceptDate
 	}
-	paymentNo, err := (*svc.payment).Sequence(ctx)
+	paymentNo, err := svc.payment.Sequence(ctx)
 	if err != nil {
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId
@@ -168,7 +170,7 @@ func createPayment(ctx context.Context, svc *PaymentService, model *Payment) *Or
 	}
 	model.PaymentNo = fmt.Sprintf("P%010d", *paymentNo) // dummy 支払い番号はP始まりとする
 	model.DeleteFlag = false
-	res, err := (*svc.payment).PutPayment(ctx, model)
+	res, err := svc.payment.PutPayment(ctx, model)
 	if err != nil {
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId

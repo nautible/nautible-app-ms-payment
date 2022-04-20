@@ -42,8 +42,6 @@ func (p *PaymentController) HelthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PaymentController) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("CreateHandler")
-	fmt.Println(r.Method)
 	switch r.Method {
 	case "POST":
 		doCreate(w, r, p.svc)
@@ -99,13 +97,11 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	model.CustomerId = restCreatePayment.CustomerId
 
 	// 決済サービス呼び出し
-	(*svc).CreatePayment(r.Context(), &model)
-
+	svc.CreatePayment(r.Context(), &model)
 	w.WriteHeader(http.StatusOK)
 }
 
 func doRejectCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService) {
-	w.WriteHeader(http.StatusCreated)
 	body := r.Body
 	defer body.Close()
 
@@ -131,7 +127,6 @@ func doRejectCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentS
 	}
 
 	// 決済削除サービス呼び出し
-	(*svc).DeleteByOrderNo(r.Context(), restRejectCreatePayment.OrderNo)
-
+	svc.DeleteByOrderNo(r.Context(), restRejectCreatePayment.OrderNo)
 	w.WriteHeader(http.StatusOK)
 }

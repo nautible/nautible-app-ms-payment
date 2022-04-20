@@ -29,7 +29,6 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 		fmt.Printf("Failed to put item[%v]\n", err)
 		return nil, err
 	}
-	fmt.Println("accept : " + model.AcceptNo)
 	return model, nil
 }
 

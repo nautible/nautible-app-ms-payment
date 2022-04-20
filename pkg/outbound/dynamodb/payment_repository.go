@@ -70,7 +70,6 @@ func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.Payment)
 	if err := table.Put(model).If("attribute_not_exists(RequestId)").RunWithContext(ctx); err != nil {
 		return err
 	}
-	fmt.Println("accept RequestId : " + model.RequestId)
 	return nil
 }
 

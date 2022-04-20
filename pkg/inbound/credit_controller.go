@@ -75,16 +75,16 @@ func (p *CreditController) Update(w http.ResponseWriter, r *http.Request) {
 // Delete credit by AcceptNo
 // (DELETE /credit/{acceptNo})
 func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, acceptNo string) {
-	fmt.Fprint(w, string("Delete : "+acceptNo))
 
 	repo := dynamodb.NewCreditRepository()
-	svc := domain.NewCreditService(repo)
+	svc := domain.NewCreditService(&repo)
 	err := svc.DeleteCreditPayment(r.Context(), acceptNo)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusNoContent)
+	fmt.Fprint(w, string("Delete : "+acceptNo))
 }
 
 // Find credit by AcceptNo

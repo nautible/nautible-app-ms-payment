@@ -10,8 +10,8 @@ type CreditService struct {
 	credit CreditRepository
 }
 
-func NewCreditService(repo CreditRepository) *CreditService {
-	return &CreditService{repo}
+func NewCreditService(repo *CreditRepository) *CreditService {
+	return &CreditService{*repo}
 }
 
 func (svc *CreditService) CreateCreditPayment(ctx context.Context, model *CreditPayment) (*CreditPayment, error) {

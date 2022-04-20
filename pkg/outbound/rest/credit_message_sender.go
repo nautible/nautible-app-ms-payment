@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
 
@@ -57,7 +58,6 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 
 // クレジット決済データ取得を依頼するメッセージ
 func (p *CreditMessageSender) GetByAcceptNo(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
-	fmt.Println("Rest GetByAcceptNo")
 	c, err := client.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
 		return &domain.CreditPayment{}, err
@@ -75,14 +75,19 @@ func (p *CreditMessageSender) GetByAcceptNo(ctx context.Context, acceptNo string
 
 // 決済データの取り消し
 func (p *CreditMessageSender) DeleteByAcceptNo(ctx context.Context, acceptNo string) error {
-	fmt.Println("Rest DeleteByAcceptNo")
-	c, err := client.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-cash/method")
+	c, err := client.NewClientWithResponses("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method")
 	if err != nil {
 		return err
 	}
 
 	// http.Response として返却
 	res, err := c.Delete(ctx, acceptNo)
+	if err != nil {
+		return err
+	}
 	defer res.Body.Close()
-	return err
+	if res.StatusCode != 204 {
+		return errors.New("StatusCode is not 204 StatusCode:" + strconv.Itoa(res.StatusCode))
+	}
+	return nil
 }
