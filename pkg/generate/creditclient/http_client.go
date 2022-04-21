@@ -106,8 +106,8 @@ type ClientInterface interface {
 	// GetByAcceptNo request
 	GetByAcceptNo(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Helthz request
-	Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Healthz request
+	Healthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) CreateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -182,8 +182,8 @@ func (c *Client) GetByAcceptNo(ctx context.Context, acceptNo string, reqEditors 
 	return c.Client.Do(req)
 }
 
-func (c *Client) Helthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewHelthzRequest(c.Server)
+func (c *Client) Healthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHealthzRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -342,8 +342,8 @@ func NewGetByAcceptNoRequest(server string, acceptNo string) (*http.Request, err
 	return req, nil
 }
 
-// NewHelthzRequest generates requests for Helthz
-func NewHelthzRequest(server string) (*http.Request, error) {
+// NewHealthzRequest generates requests for Healthz
+func NewHealthzRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -351,7 +351,7 @@ func NewHelthzRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/helthz")
+	operationPath := fmt.Sprintf("/healthz")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -428,8 +428,8 @@ type ClientWithResponsesInterface interface {
 	// GetByAcceptNo request
 	GetByAcceptNoWithResponse(ctx context.Context, acceptNo string, reqEditors ...RequestEditorFn) (*GetByAcceptNoResponse, error)
 
-	// Helthz request
-	HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error)
+	// Healthz request
+	HealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HealthzResponse, error)
 }
 
 type CreateResponse struct {
@@ -519,13 +519,13 @@ func (r GetByAcceptNoResponse) StatusCode() int {
 	return 0
 }
 
-type HelthzResponse struct {
+type HealthzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r HelthzResponse) Status() string {
+func (r HealthzResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -533,7 +533,7 @@ func (r HelthzResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r HelthzResponse) StatusCode() int {
+func (r HealthzResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -592,13 +592,13 @@ func (c *ClientWithResponses) GetByAcceptNoWithResponse(ctx context.Context, acc
 	return ParseGetByAcceptNoResponse(rsp)
 }
 
-// HelthzWithResponse request returning *HelthzResponse
-func (c *ClientWithResponses) HelthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HelthzResponse, error) {
-	rsp, err := c.Helthz(ctx, reqEditors...)
+// HealthzWithResponse request returning *HealthzResponse
+func (c *ClientWithResponses) HealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*HealthzResponse, error) {
+	rsp, err := c.Healthz(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseHelthzResponse(rsp)
+	return ParseHealthzResponse(rsp)
 }
 
 // ParseCreateResponse parses an HTTP response from a CreateWithResponse call
@@ -695,15 +695,15 @@ func ParseGetByAcceptNoResponse(rsp *http.Response) (*GetByAcceptNoResponse, err
 	return response, nil
 }
 
-// ParseHelthzResponse parses an HTTP response from a HelthzWithResponse call
-func ParseHelthzResponse(rsp *http.Response) (*HelthzResponse, error) {
+// ParseHealthzResponse parses an HTTP response from a HealthzWithResponse call
+func ParseHealthzResponse(rsp *http.Response) (*HealthzResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &HelthzResponse{
+	response := &HealthzResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

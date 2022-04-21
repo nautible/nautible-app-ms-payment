@@ -12,8 +12,8 @@ import (
 
 func main() {
 	controller := createController()
-	http.HandleFunc("/helthz", func(w http.ResponseWriter, r *http.Request) {
-		controller.HelthCheck(w, r)
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		controller.HealthCheck(w, r)
 	})
 	http.HandleFunc("/payment/create", func(w http.ResponseWriter, r *http.Request) {
 		controller.Create(w, r)

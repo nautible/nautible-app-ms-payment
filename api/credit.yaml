@@ -5,12 +5,12 @@ info:
 servers:
   - url: http://localhost:8080/
 paths:
-  /helthz:
+  /healthz:
     get:
       tags:
-        - HelthCheckService
-      operationId: helthz
-      summary: Credit Service Helth Check
+        - HealthCheckService
+      operationId: healthz
+      summary: Credit Service Health Check
       description: Returns a status code
       responses:
         200:

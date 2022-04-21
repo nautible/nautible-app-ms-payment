@@ -36,9 +36,9 @@ func NewPaymentController(svc *domain.PaymentService) *PaymentController {
 	return &PaymentController{svc: svc}
 }
 
-func (p *PaymentController) HelthCheck(w http.ResponseWriter, r *http.Request) {
+func (p *PaymentController) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Helth Check OK")
+	fmt.Fprintf(w, "Health Check OK")
 }
 
 func (p *PaymentController) Create(w http.ResponseWriter, r *http.Request) {

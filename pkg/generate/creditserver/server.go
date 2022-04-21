@@ -25,9 +25,9 @@ type ServerInterface interface {
 	// Get credit by accpetNo
 	// (GET /credit/{acceptNo})
 	GetByAcceptNo(w http.ResponseWriter, r *http.Request, acceptNo string)
-	// Credit Service Helth Check
-	// (GET /helthz)
-	Helthz(w http.ResponseWriter, r *http.Request)
+	// Credit Service Health Check
+	// (GET /healthz)
+	Healthz(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -121,12 +121,12 @@ func (siw *ServerInterfaceWrapper) GetByAcceptNo(w http.ResponseWriter, r *http.
 	handler(w, r.WithContext(ctx))
 }
 
-// Helthz operation middleware
-func (siw *ServerInterfaceWrapper) Helthz(w http.ResponseWriter, r *http.Request) {
+// Healthz operation middleware
+func (siw *ServerInterfaceWrapper) Healthz(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Helthz(w, r)
+		siw.Handler.Healthz(w, r)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -262,7 +262,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/credit/{acceptNo}", wrapper.GetByAcceptNo)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/helthz", wrapper.Helthz)
+		r.Get(options.BaseURL+"/healthz", wrapper.Healthz)
 	})
 
 	return r
