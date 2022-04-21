@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: nautible-app-ms-order
+  version: 1.0.0-SNAPSHOT
+servers:
+- url: http://localhost:8080/
+paths:
+  /order/createOrderReply:
+    post:
+      tags:
+        - RestOrderService
+      operationId: createOrderReply
+      summary: SAGA注文応答
+      description: SAGA注文応答
+      requestBody:
+        content:
+          "application/cloudevents+json":
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: successful operation
+          content: {}
+components:
+  schemas:
+    CreateOrderReply:
+      type: object
+      required:
+        - requestId
+        - status
+        - processType
+      properties:
+        requestId:
+          type: string
+          description: 処理要求を一意に表すリクエストId。
+          example: O0000000001-1234567890
+        status:
+          type: integer
+          description: 処理結果ステータス
+          example: 200
+        message:
+          type: string
+          description: メッセージ
+          example: 在庫不足
+        processType:
+          enum:
+            - 'STOCK_RESERVE_ALLOCATE'
+            - 'STOCK_APPROVE_ALLOCATE'
+            - 'STOCK_REJECT_ALLOCATE'
+            - 'PAYMENT_CREATE'
+            - 'PAYMENT_REJECT_CREATE'
+            - 'PAYMENT'

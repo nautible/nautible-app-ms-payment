@@ -1,0 +1,181 @@
+openapi: "3.0.2"
+info:
+  title: nautible-app-ms-payment-credit
+  version: 1.0.0-SNAPSHOT
+servers:
+  - url: http://localhost:8080/
+paths:
+  /healthz:
+    get:
+      tags:
+        - HealthCheckService
+      operationId: healthz
+      summary: Credit Service Health Check
+      description: Returns a status code
+      responses:
+        200:
+          description: successful operation
+      responses:
+        503:
+          description: Service Unavailable
+  /credit/{acceptNo}:
+    get:
+      tags:
+        - RestCreditService
+      operationId: getByAcceptNo
+      summary: Get credit by accpetNo
+      description: Returns a single credit
+      parameters:
+        - name: acceptNo
+          in: path
+          description: acceptNo
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestCreditPayment"
+        404:
+          description: not found
+          content: {}
+    delete:
+      tags:
+        - RestCreditService
+      operationId: delete
+      summary: Delete credit by acceptNo
+      description: Delete a credit
+      parameters:
+        - name: acceptNo
+          in: path
+          description: acceptNo
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: successful operation
+          content: {}
+        404:
+          description: not found
+          content: {}
+  /credit:
+    post:
+      tags:
+        - RestCreditService
+      operationId: create
+      summary: Create Credit
+      description: Create Credit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestCreateCreditPayment"
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestCreditPayment"
+        404:
+          description: not found
+          content: {}
+    put:
+      tags:
+        - RestCreditService
+      operationId: update
+      summary: Update Credit
+      description: Update Credit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestUpdateCreditPayment"
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestCreditPayment"
+        404:
+          description: not found
+          content: {}
+components:
+  schemas:
+    RestUpdateCreditPayment:
+      type: object
+      required:
+        - acceptNo
+      properties:
+        acceptNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        acceptDate:
+          type: string
+          example: "2021/01/01 10:11:12"
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+    RestCreateCreditPayment:
+      type: object
+      required:
+        - orderNo
+        - orderDate
+        - customerId
+        - totalPrice
+      properties:
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980
+    RestCreditPayment:
+      type: object
+      properties:
+        acceptNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        acceptDate:
+          type: string
+          example: "2021-01-01 23:10:12"
+        orderNo:
+          type: string
+          example: "1111-2222-3333-4444"
+        orderDate:
+          type: string
+          example: 2021/01/01 10:11:12
+        customerId:
+          type: integer
+          format: int32
+          example: 123
+        totalPrice:
+          type: integer
+          format: int32
+          example: 1980

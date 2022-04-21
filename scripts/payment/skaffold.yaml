@@ -1,0 +1,30 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: nautible-app-ms-payment
+build:
+  artifacts:
+    - image: nautible-app-ms-payment
+      custom:
+        buildCommand: ./scripts/payment/build.sh
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - ".github/**"
+            - "api/**"
+            - "assets/**"
+            - "cmd/credit/**"
+            - "scripts/**"
+            - "**/go.sum"
+            - ".gitignore"
+            - "LICENSE"
+            - "NOTICE"
+            - "*.md"
+  local:
+    push: false
+    useBuildkit: true
+deploy:
+  kustomize:
+    paths:
+      - ../nautible-app-ms-payment-manifest/payment/overlays/local-dev
