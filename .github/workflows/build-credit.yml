@@ -31,6 +31,7 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-oidc-role
         aws-region: ap-northeast-1
+    - run: aws sts get-caller-identity
     - name: Login to Amazon public ECR
       id: login-ecr
       run: |
