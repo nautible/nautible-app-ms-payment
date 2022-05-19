@@ -4,9 +4,9 @@ on:
   push:
     branches: [ feature/issue31 ]
     paths: 
-      - 'cmd/payment'
-      - 'pkg'
-      - 'package/payment'
+      - 'cmd/payment/**'
+      - 'pkg/**'
+      - 'package/payment/**'
       - '.github/workflows/build-payment.yml'
 
 permissions:

@@ -4,9 +4,9 @@ on:
   push:
     branches: [ feature/issue31 ]
     paths: 
-      - 'cmd/credit'
-      - 'pkg'
-      - 'package/credit'
+      - 'cmd/credit/**'
+      - 'pkg/**'
+      - 'package/credit/**'
       - '.github/workflows/build-credit.yml'
 
 permissions:
