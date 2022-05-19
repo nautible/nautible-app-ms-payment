@@ -18,6 +18,6 @@ FROM scratch as runner
 
 WORKDIR /app/
 COPY --from=builder /go/app/bin/main /app/main
-RUN ls -latr /app/main
+
 EXPOSE 8080
 ENTRYPOINT ["/app/main"]
