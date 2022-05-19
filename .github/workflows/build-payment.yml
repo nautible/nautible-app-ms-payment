@@ -42,7 +42,7 @@ jobs:
         aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/nautible
 
     - name: PaymentApp Build, tag, and push image to Amazon ECR
-      id: build-image-service
+      id: build-payment-image-service
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
@@ -55,7 +55,7 @@ jobs:
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
     - name: CreditApp Build, tag, and push image to Amazon ECR
-      id: build-image-service
+      id: build-credit-image-service
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
