@@ -2,7 +2,7 @@ name: Go CI Payment Application
 
 on:
   push:
-    branches: [ feature/issue31 ]
+    branches: [ main ]
     paths: 
       - 'cmd/**'
       - 'pkg/**'
