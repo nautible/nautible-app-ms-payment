@@ -2,12 +2,16 @@ name: Go CI Payment Application
 
 on:
   push:
-    branches: [ hotfix/issue67 ]
+    branches: [ main ]
     paths: 
-      - 'cmd/payment'
-      - 'pkg'
-      - 'package/payment'
-      - '.github/workflows/build-payment.yml'
+      - 'cmd/**'
+      - 'pkg/**'
+      - 'package/**'
+      - '.github/**'
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build:
@@ -29,15 +33,16 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-oidc-role
+        aws-region: ap-northeast-1
+    - run: aws sts get-caller-identity
     - name: Login to Amazon public ECR
       id: login-ecr
       run: |
         aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/nautible
-    - name: Payment Build, tag, and push image to Amazon ECR
-      id: build-image-service
+
+    - name: PaymentApp Build, tag, and push image to Amazon ECR
+      id: build-payment-image-service
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
@@ -48,6 +53,20 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: CreditApp Build, tag, and push image to Amazon ECR
+      id: build-credit-image-service
+      env:
+        DOCKER_BUILDKIT: 1
+        ECR_REGISTRY: public.ecr.aws/nautible
+        ECR_REPOSITORY: nautible-app-ms-payment-credit
+      run: |
+        cd $GITHUB_WORKSPACE
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
     - name: pull request
       id: pull-request
       env:
@@ -57,6 +76,7 @@ jobs:
         cd $GITHUB_WORKSPACE/nautible-app-ms-payment-manifest
         git checkout -b $tag
         sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:'$IMAGE_TAG'/' ./payment/base/payment-deploy.yaml 
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:'$IMAGE_TAG'/' ./credit/base/payment-credit-deploy.yaml 
         git config user.name github-actions[bot]
         git config user.email github-actions[bot]@users.noreply.github.com
         git add .
