@@ -2,7 +2,7 @@ name: Go CI Credit Application
 
 on:
   push:
-    branches: [ main ]
+    branches: [ hotfix/issue67 ]
     paths: 
       - 'cmd/credit'
       - 'pkg'
