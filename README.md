@@ -99,3 +99,37 @@ oapi-codegen -package creditserver -generate "spec" -o pkg/generate/creditserver
 go mod init github.com/nautible/nautible-app-ms-payment
 go mod tidy
 ```
+
+## ローカルでの実行
+
+### payment
+
+- aws用モジュールの実行
+
+```bash
+cd scripts/payment
+./skaffold.sh aws
+```
+
+- azure用モジュールの実行
+
+```bash
+cd scripts/payment
+./skaffold.sh azure
+```
+
+### credit
+
+- aws用モジュールの実行
+
+```bash
+cd scripts/credit
+./skaffold.sh aws
+```
+
+- azure用モジュールの実行
+
+```bash
+cd scripts/credit
+./skaffold.sh azure
+```

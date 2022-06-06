@@ -17,9 +17,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func main() {
-	target := "aws" // -ldflags '-X main.target=(aws|azure)'
+var target string // -ldflags '-X main.target=(aws|azure)'
 
+func main() {
 	var port = flag.Int("port", 8080, "Port for test HTTP server")
 	flag.Parse()
 

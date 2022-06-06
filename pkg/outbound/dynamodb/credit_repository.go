@@ -12,18 +12,22 @@ import (
 	"github.com/guregu/dynamo"
 )
 
-type creditRepository struct {
+type CreditRepository struct {
 	db *dynamo.DB
 }
 
 func NewCreditRepository() domain.CreditRepository {
 	sess := session.Must(session.NewSession())
 	db := dynamo.New(sess, aws.NewConfig().WithRegion(os.Getenv("DYNAMODB_REGION")).WithEndpoint(os.Getenv("DYNAMODB_ENDPOINT")))
-	return &creditRepository{db: db}
+	return &CreditRepository{db: db}
+}
+
+func (p *CreditRepository) Close() {
+	fmt.Println("DynamoDB close NoOp")
 }
 
 // 決済データの登録
-func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.CreditPayment) (*domain.CreditPayment, error) {
+func (p *CreditRepository) PutCreditPayment(ctx context.Context, model *domain.CreditPayment) (*domain.CreditPayment, error) {
 	table := p.db.Table("CreditPayment")
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
@@ -33,7 +37,7 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 }
 
 // AcceptNoに該当するクレジット決済情報を取得
-func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
+func (p *CreditRepository) GetCreditPayment(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
 	table := p.db.Table("CreditPayment")
 	var result domain.CreditPayment
 	if err := table.Get("AcceptNo", acceptNo).OneWithContext(ctx, &result); err != nil {
@@ -46,7 +50,7 @@ func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string
 }
 
 // acceptNoに該当する決済データ論理を削除
-func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo string) error {
+func (p *CreditRepository) DeleteCreditPayment(ctx context.Context, acceptNo string) error {
 	table := p.db.Table("CreditPayment")
 
 	var result domain.Payment
@@ -54,7 +58,7 @@ func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo str
 }
 
 // シーケンス取得
-func (p *creditRepository) Sequence(ctx context.Context) (*int, error) {
+func (p *CreditRepository) Sequence(ctx context.Context) (*int, error) {
 	var counter struct {
 		Name           string
 		SequenceNumber int

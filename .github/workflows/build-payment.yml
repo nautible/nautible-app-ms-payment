@@ -2,7 +2,7 @@ name: Go CI Payment Application
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature/issue53 ]
     paths: 
       - 'cmd/**'
       - 'pkg/**'
@@ -30,6 +30,8 @@ jobs:
         repository: nautible/nautible-app-ms-payment-manifest
         path: nautible-app-ms-payment-manifest
         token: ${{ secrets.PAT }}
+  
+    # AWS
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -42,30 +44,66 @@ jobs:
         aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/nautible
 
     - name: PaymentApp Build, tag, and push image to Amazon ECR
-      id: build-payment-image-service
+      id: build-payment-image-service-ecr
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
         ECR_REPOSITORY: nautible-app-ms-payment
       run: |
         cd $GITHUB_WORKSPACE
-        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
     - name: CreditApp Build, tag, and push image to Amazon ECR
-      id: build-credit-image-service
+      id: build-credit-image-service-ecr
       env:
         DOCKER_BUILDKIT: 1
         ECR_REGISTRY: public.ecr.aws/nautible
         ECR_REPOSITORY: nautible-app-ms-payment-credit
       run: |
         cd $GITHUB_WORKSPACE
-        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+        docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    # Azure
+    - name: Login via Azure CLI
+      id: login-acr
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Login Azure Docker
+      id: login-azure-docker
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
+        username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+        password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+
+    - name: PaymentApp Build, tag, and push image to Azure ACR
+      id: build-payment-image-service-acr
+      env:
+        DOCKER_BUILDKIT: 1
+        ACR_REGISTRY: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
+        ACR_REPOSITORY: nautible-app-ms-order
+      run: |
+        cd $GITHUB_WORKSPACE
+        docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+        docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
+        docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
+
+    - name: CreditApp Build, tag, and push image to Azure ACR
+      id: build-credit-image-service-acr
+      env:
+        DOCKER_BUILDKIT: 1
+        ACR_REGISTRY: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
+        ACR_REPOSITORY: nautible-app-ms-order
+      run: |
+        cd $GITHUB_WORKSPACE
+        docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+        docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
+        docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
 
     - name: pull request
       id: pull-request

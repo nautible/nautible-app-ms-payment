@@ -10,4 +10,5 @@ type PaymentRepository interface {
 	DeletePayment(context.Context, string) error
 	PutPaymentHistory(context.Context, *Payment) error
 	Sequence(context.Context) (*int, error)
+	Close()
 }
