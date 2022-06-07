@@ -46,7 +46,7 @@ func (p *paymentRepository) Close() {
 }
 
 func (p *paymentRepository) FindPayment(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
-	filter := bson.D{{"CustomerId", customerId}, {"OrderDate", bson.D{{"$gt", orderDateFrom}, {"$lt", orderDateTo}}}}
+	filter := bson.D{{Key: "CustomerId", Value: customerId}, {Key: "OrderDate", Value: bson.D{{Key: "$gt", Value: orderDateFrom}, {Key: "$lt", Value: orderDateTo}}}}
 	var payments []*domain.Payment
 	collection := p.db.Database("Payment").Collection("Payment")
 
@@ -86,7 +86,7 @@ func (p *paymentRepository) PutPaymentHistory(ctx context.Context, model *domain
 
 // AcceptNoに該当するクレジット決済情報を取得
 func (p *paymentRepository) GetPayment(ctx context.Context, acceptNo string) (*domain.Payment, error) {
-	filter := bson.D{{"AcceptNo", acceptNo}}
+	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
 
 	collection := p.db.Database("Payment").Collection("Payment")
 	rs, err := collection.Find(ctx, filter)
@@ -110,8 +110,8 @@ func (p *paymentRepository) GetPayment(ctx context.Context, acceptNo string) (*d
 
 // acceptNoに該当する決済データ論理を削除
 func (p *paymentRepository) DeletePayment(ctx context.Context, acceptNo string) error {
-	filter := bson.D{{"AcceptNo", acceptNo}}
-	update := bson.D{{"DeleteFlag", acceptNo}}
+	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
+	update := bson.D{{Key: "DeleteFlag", Value: acceptNo}}
 	collection := p.db.Database("Payment").Collection("Payment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	fmt.Println("added Payment", result.UpsertedID)
@@ -120,8 +120,8 @@ func (p *paymentRepository) DeletePayment(ctx context.Context, acceptNo string) 
 
 // シーケンス取得
 func (p *paymentRepository) Sequence(ctx context.Context) (*int, error) {
-	filter := bson.D{{"_id", "Payment"}}
-	update := bson.D{{"$inc", bson.D{{"SequenceNumber", 1}}}}
+	filter := bson.D{{Key: "_id", Value: "Payment"}}
+	update := bson.D{{Key: "$inc", Value: bson.D{{Key: "SequenceNumber", Value: 1}}}}
 	ops := options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After)
 	collection := p.db.Database("Common").Collection("Sequence")
 	var updatedDoc bson.M

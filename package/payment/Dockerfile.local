@@ -5,12 +5,13 @@ WORKDIR /go/app
 COPY ./pkg/ ./pkg/
 COPY ./cmd/payment/ ./cmd/payment/
 COPY ./go.mod  ./
+COPY ./go.sum  ./
 
 ARG CLOUD=aws
 ARG CGO_ENABLED=0
 ARG GOOS=linux
 ARG GOARCH=amd64
-RUN go mod tidy
+
 RUN cd cmd/payment && \
     go build \
     -o /go/app/bin/main \

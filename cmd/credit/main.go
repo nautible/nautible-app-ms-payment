@@ -31,7 +31,8 @@ func main() {
 
 	swagger.Servers = nil
 
-	paymentController := createController(target)
+	paymentController, repo := createController(target)
+	defer (*repo).Close()
 
 	r := chi.NewRouter()
 
@@ -46,7 +47,7 @@ func main() {
 	log.Fatal(s.ListenAndServe())
 }
 
-func createController(target string) *controller.CreditController {
+func createController(target string) (*controller.CreditController, *domain.CreditRepository) {
 
 	var repo domain.CreditRepository
 	switch target {
@@ -60,5 +61,5 @@ func createController(target string) *controller.CreditController {
 	svc := domain.NewCreditService(&repo)
 
 	creditController := controller.NewCreditController(svc)
-	return creditController
+	return creditController, &repo
 }

@@ -15,7 +15,9 @@ import (
 var target string // -ldflags '-X main.target=(aws|azure)'
 
 func main() {
-	controller := createController(target)
+	controller, repo := createController(target)
+	defer (*repo).Close()
+
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		controller.HealthCheck(w, r)
 	})
@@ -28,7 +30,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func createController(target string) *controller.PaymentController {
+func createController(target string) (*controller.PaymentController, *domain.PaymentRepository) {
 	var repo domain.PaymentRepository
 	switch target {
 	case "aws":
@@ -44,5 +46,5 @@ func createController(target string) *controller.PaymentController {
 	orderMessage := rest.NewOrderMessageSender()
 	service := domain.NewPaymentService(&repo, &creditMessage, &orderMessage)
 	controller := controller.NewPaymentController(service)
-	return controller
+	return controller, &repo
 }

@@ -56,7 +56,7 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 
 // AcceptNoに該当するクレジット決済情報を取得
 func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
-	filter := bson.D{{"AcceptNo", acceptNo}}
+	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
 
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	rs, err := collection.Find(ctx, filter)
@@ -80,8 +80,8 @@ func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string
 
 // acceptNoに該当する決済データ論理を削除
 func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo string) error {
-	filter := bson.D{{"AcceptNo", acceptNo}}
-	update := bson.D{{"DeleteFlag", acceptNo}}
+	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
+	update := bson.D{{Key: "DeleteFlag", Value: acceptNo}}
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	fmt.Println("added CreditPayment", result.UpsertedID)
@@ -90,8 +90,8 @@ func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo str
 
 // シーケンス取得
 func (p *creditRepository) Sequence(ctx context.Context) (*int, error) {
-	filter := bson.D{{"_id", "CreditPayment"}}
-	update := bson.D{{"$inc", bson.D{{"SequenceNumber", 1}}}}
+	filter := bson.D{{Key: "_id", Value: "CreditPayment"}}
+	update := bson.D{{Key: "$inc", Value: bson.D{{Key: "SequenceNumber", Value: 1}}}}
 	ops := options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After)
 	collection := p.db.Database("Common").Collection("Sequence")
 	var updatedDoc bson.M
