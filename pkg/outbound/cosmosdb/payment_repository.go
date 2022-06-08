@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
@@ -19,8 +20,9 @@ type paymentRepository struct {
 }
 
 func NewPaymentRepository() domain.PaymentRepository {
-	mongoDBConnectionString := fmt.Sprintf("mongodb://%s:%s@%s:%s/Payment?authSource=admin", os.Getenv("DB_USER"), os.Getenv("DB_PW"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"))
-	fmt.Println("DB string : " + mongoDBConnectionString)
+	mongoDBConnectionString := os.Getenv("DB_CONNECTION_STRING")
+	mongoDBConnectionString = strings.Replace(mongoDBConnectionString, "${DB_USER}", os.Getenv("DB_USER"), -1)
+	mongoDBConnectionString = strings.Replace(mongoDBConnectionString, "${DB_PW}", os.Getenv("DB_PW"), -1)
 	clientOptions := options.Client().ApplyURI(mongoDBConnectionString).SetDirect(true)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
