@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -34,10 +33,8 @@ func createController(target string) (*controller.PaymentController, *domain.Pay
 	var repo domain.PaymentRepository
 	switch target {
 	case "aws":
-		fmt.Println("dynamodb...")
 		repo = dynamodb.NewPaymentRepository()
 	case "azure":
-		fmt.Println("cosmosdb...")
 		repo = cosmosdb.NewPaymentRepository()
 	default:
 		panic("invalid ldflags parameter [main.target]")
