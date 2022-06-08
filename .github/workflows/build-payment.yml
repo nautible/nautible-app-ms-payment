@@ -98,7 +98,7 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
         ACR_REGISTRY: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
-        ACR_REPOSITORY: nautible-app-ms-payment
+        ACR_REPOSITORY: nautible-app-ms-credit
       run: |
         cd $GITHUB_WORKSPACE
         docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
