@@ -1,4 +1,4 @@
-name: Go CI Payment Application
+name: Go CI Payment and Credit Application
 
 on:
   push:
