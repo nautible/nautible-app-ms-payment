@@ -65,7 +65,20 @@ func (p *paymentRepository) FindPayment(ctx context.Context, customerId int32, o
 
 func (p *paymentRepository) PutPayment(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	collection := p.db.Database("Payment").Collection("Payment")
-	result, err := collection.InsertOne(ctx, model)
+	doc := bson.D{
+		{Key: "RequestId", Value: model.RequestId},
+		{Key: "PaymentNo", Value: model.PaymentNo},
+		{Key: "PaymentType", Value: model.PaymentType},
+		{Key: "OrderNo", Value: model.OrderNo},
+		{Key: "OrderDate", Value: model.OrderDate},
+		{Key: "AcceptNo", Value: model.AcceptNo},
+		{Key: "AcceptDate", Value: model.AcceptDate},
+		{Key: "CustomerId", Value: model.CustomerId},
+		{Key: "TotalPrice", Value: model.TotalPrice},
+		{Key: "OrderStatus", Value: model.OrderStatus},
+		{Key: "DeleteFlag", Value: model.DeleteFlag},
+	}
+	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
 		return nil, err
@@ -77,7 +90,20 @@ func (p *paymentRepository) PutPayment(ctx context.Context, model *domain.Paymen
 // 履歴の登録
 func (p *paymentRepository) PutPaymentHistory(ctx context.Context, model *domain.Payment) error {
 	collection := p.db.Database("Payment").Collection("PaymentAllocateHistory")
-	result, err := collection.InsertOne(ctx, model)
+	doc := bson.D{
+		{Key: "RequestId", Value: model.RequestId},
+		{Key: "PaymentNo", Value: model.PaymentNo},
+		{Key: "PaymentType", Value: model.PaymentType},
+		{Key: "OrderNo", Value: model.OrderNo},
+		{Key: "OrderDate", Value: model.OrderDate},
+		{Key: "AcceptNo", Value: model.AcceptNo},
+		{Key: "AcceptDate", Value: model.AcceptDate},
+		{Key: "CustomerId", Value: model.CustomerId},
+		{Key: "TotalPrice", Value: model.TotalPrice},
+		{Key: "OrderStatus", Value: model.OrderStatus},
+		{Key: "DeleteFlag", Value: model.DeleteFlag},
+	}
+	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
 		return err
@@ -88,7 +114,7 @@ func (p *paymentRepository) PutPaymentHistory(ctx context.Context, model *domain
 
 // orderNoに該当するクレジット決済情報を取得
 func (p *paymentRepository) GetPayment(ctx context.Context, orderNo string) (*domain.Payment, error) {
-	filter := bson.D{{Key: "orderNo", Value: orderNo}}
+	filter := bson.D{{Key: "OrderNo", Value: orderNo}}
 
 	collection := p.db.Database("Payment").Collection("Payment")
 	rs, err := collection.Find(ctx, filter)
@@ -112,8 +138,8 @@ func (p *paymentRepository) GetPayment(ctx context.Context, orderNo string) (*do
 
 // orderNoに該当する決済データ論理を削除
 func (p *paymentRepository) DeletePayment(ctx context.Context, orderNo string) error {
-	filter := bson.D{{Key: "orderNo", Value: orderNo}}
-	update := bson.D{{Key: "deleteFlag", Value: true}}
+	filter := bson.D{{Key: "OrderNo", Value: orderNo}}
+	update := bson.D{{Key: "DeleteFlag", Value: true}}
 	collection := p.db.Database("Payment").Collection("Payment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	fmt.Println("added Payment", result.UpsertedID)

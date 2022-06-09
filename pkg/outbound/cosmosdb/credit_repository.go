@@ -47,7 +47,16 @@ func (p *creditRepository) Close() {
 
 func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.CreditPayment) (*domain.CreditPayment, error) {
 	collection := p.db.Database("Payment").Collection("CreditPayment")
-	result, err := collection.InsertOne(ctx, model)
+	doc := bson.D{
+		{Key: "AcceptNo", Value: model.AcceptNo},
+		{Key: "AcceptDate", Value: model.AcceptDate},
+		{Key: "OrderNo", Value: model.OrderNo},
+		{Key: "OrderDate", Value: model.OrderDate},
+		{Key: "CustomerId", Value: model.CustomerId},
+		{Key: "TotalPrice", Value: model.TotalPrice},
+		{Key: "DeleteFlag", Value: model.DeleteFlag},
+	}
+	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
 		return nil, err
@@ -58,7 +67,7 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 
 // AcceptNoに該当するクレジット決済情報を取得
 func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
-	filter := bson.D{{Key: "acceptNo", Value: acceptNo}}
+	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
 
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	rs, err := collection.Find(ctx, filter)
@@ -82,8 +91,8 @@ func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string
 
 // acceptNoに該当する決済データ論理を削除
 func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo string) error {
-	filter := bson.D{{Key: "acceptNo", Value: acceptNo}}
-	update := bson.D{{Key: "deleteFlag", Value: true}}
+	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
+	update := bson.D{{Key: "DeleteFlag", Value: true}}
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	fmt.Println("added CreditPayment", result.UpsertedID)
