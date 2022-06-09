@@ -20,6 +20,7 @@ import (
 var target string // -ldflags '-X main.target=(aws|azure)'
 
 func main() {
+	log.SetOutput(os.Stdout)
 	var port = flag.Int("port", 8080, "Port for test HTTP server")
 	flag.Parse()
 
@@ -48,14 +49,13 @@ func main() {
 }
 
 func createController(target string) (*controller.CreditController, *domain.CreditRepository) {
-
 	var repo domain.CreditRepository
 	switch target {
 	case "aws":
-		fmt.Println("target aws")
+		log.Println("target aws")
 		repo = dynamodb.NewCreditRepository()
 	case "azure":
-		fmt.Println("target azure")
+		log.Println("target azure")
 		repo = cosmosdb.NewCreditRepository()
 	default:
 		panic("invalid ldflags parameter [main.target]")

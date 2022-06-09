@@ -46,6 +46,7 @@ func (p *creditRepository) Close() {
 }
 
 func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.CreditPayment) (*domain.CreditPayment, error) {
+	log.Println("start PutCreditPayment")
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	doc := bson.D{
 		{Key: "AcceptNo", Value: model.AcceptNo},
@@ -58,10 +59,10 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 	}
 	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
-		fmt.Printf("Failed to put item[%v]\n", err)
+		log.Printf("Failed to put item[%v]\n", err)
 		return nil, err
 	}
-	fmt.Println("added CreditPayment", result.InsertedID)
+	log.Println("added CreditPayment", result.InsertedID)
 	return model, nil
 }
 
