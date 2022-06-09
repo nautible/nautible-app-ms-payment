@@ -52,9 +52,11 @@ func createController(target string) (*controller.CreditController, *domain.Cred
 	var repo domain.CreditRepository
 	switch target {
 	case "aws":
+		fmt.Fprintf(os.Stderr, "target aws...")
 		log.Fatal("target aws")
 		repo = dynamodb.NewCreditRepository()
 	case "azure":
+		fmt.Fprintf(os.Stderr, "target azure...")
 		log.Fatal("target azure")
 		repo = cosmosdb.NewCreditRepository()
 	default:
