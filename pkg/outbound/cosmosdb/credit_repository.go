@@ -58,7 +58,7 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 
 // AcceptNoに該当するクレジット決済情報を取得
 func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
-	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
+	filter := bson.D{{Key: "acceptNo", Value: acceptNo}}
 
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	rs, err := collection.Find(ctx, filter)
@@ -82,8 +82,8 @@ func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string
 
 // acceptNoに該当する決済データ論理を削除
 func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo string) error {
-	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
-	update := bson.D{{Key: "DeleteFlag", Value: acceptNo}}
+	filter := bson.D{{Key: "acceptNo", Value: acceptNo}}
+	update := bson.D{{Key: "deleteFlag", Value: true}}
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	fmt.Println("added CreditPayment", result.UpsertedID)

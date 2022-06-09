@@ -86,9 +86,9 @@ func (p *paymentRepository) PutPaymentHistory(ctx context.Context, model *domain
 	return nil
 }
 
-// AcceptNoに該当するクレジット決済情報を取得
-func (p *paymentRepository) GetPayment(ctx context.Context, acceptNo string) (*domain.Payment, error) {
-	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
+// orderNoに該当するクレジット決済情報を取得
+func (p *paymentRepository) GetPayment(ctx context.Context, orderNo string) (*domain.Payment, error) {
+	filter := bson.D{{Key: "orderNo", Value: orderNo}}
 
 	collection := p.db.Database("Payment").Collection("Payment")
 	rs, err := collection.Find(ctx, filter)
@@ -110,10 +110,10 @@ func (p *paymentRepository) GetPayment(ctx context.Context, acceptNo string) (*d
 	return &payments[0], nil
 }
 
-// acceptNoに該当する決済データ論理を削除
-func (p *paymentRepository) DeletePayment(ctx context.Context, acceptNo string) error {
-	filter := bson.D{{Key: "AcceptNo", Value: acceptNo}}
-	update := bson.D{{Key: "DeleteFlag", Value: acceptNo}}
+// orderNoに該当する決済データ論理を削除
+func (p *paymentRepository) DeletePayment(ctx context.Context, orderNo string) error {
+	filter := bson.D{{Key: "orderNo", Value: orderNo}}
+	update := bson.D{{Key: "deleteFlag", Value: true}}
 	collection := p.db.Database("Payment").Collection("Payment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	fmt.Println("added Payment", result.UpsertedID)
