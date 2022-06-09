@@ -52,8 +52,10 @@ func createController(target string) (*controller.CreditController, *domain.Cred
 	var repo domain.CreditRepository
 	switch target {
 	case "aws":
+		fmt.Println("target aws")
 		repo = dynamodb.NewCreditRepository()
 	case "azure":
+		fmt.Println("target azure")
 		repo = cosmosdb.NewCreditRepository()
 	default:
 		panic("invalid ldflags parameter [main.target]")
