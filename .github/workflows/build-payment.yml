@@ -2,7 +2,7 @@ name: Go CI Payment and Credit Application
 
 on:
   push:
-    branches: [ feature/issue53 ]
+    branches: [ develop ]
     paths: 
       - 'cmd/**'
       - 'pkg/**'
