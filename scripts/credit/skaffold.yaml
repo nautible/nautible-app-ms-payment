@@ -6,7 +6,7 @@ build:
   artifacts:
     - image: nautible-app-ms-payment-credit
       custom:
-        buildCommand: ./scripts/credit/build.sh
+        buildCommand: ./scripts/credit/build.sh aws
         dependencies:
           paths:
             - "."
@@ -27,4 +27,34 @@ build:
 deploy:
   kustomize:
     paths:
-      - ../nautible-app-ms-payment-manifest/credit/overlays/local-dev
+      - ../nautible-app-ms-payment-manifest/credit/overlays/aws/local-dev
+
+profiles:
+- name: aws
+- name: azure
+  build:
+    artifacts:
+      - image: nautible-app-ms-payment-credit
+        custom:
+          buildCommand: ./scripts/credit/build.sh azure
+          dependencies:
+            paths:
+              - "."
+            ignore:
+              - ".github/**"
+              - "api/**"
+              - "assets/**"
+              - "cmd/payment/**"
+              - "scripts/**"
+              - "**/go.sum"
+              - ".gitignore"
+              - "LICENSE"
+              - "NOTICE"
+              - "*.md"
+    local:
+      push: false
+      useBuildkit: true
+  deploy:
+    kustomize:
+      paths:
+        - ../nautible-app-ms-payment-manifest/credit/overlays/azure/local-dev

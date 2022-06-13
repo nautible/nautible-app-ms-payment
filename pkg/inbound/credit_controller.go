@@ -43,11 +43,11 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	model.OrderDate = req.OrderDate
 	model.CustomerId = req.CustomerId
 	model.TotalPrice = req.TotalPrice
-	service := *p.svc
-	res, err := service.CreateCreditPayment(r.Context(), &model)
+	res, err := p.svc.CreateCreditPayment(r.Context(), &model)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	var result server.RestCreditPayment
 	result.AcceptNo = &res.AcceptNo
@@ -60,6 +60,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resultJson)

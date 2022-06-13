@@ -12,17 +12,21 @@ import (
 	"github.com/guregu/dynamo"
 )
 
-type dynamoDb struct {
+type PaymentRepository struct {
 	db *dynamo.DB
 }
 
 func NewPaymentRepository() domain.PaymentRepository {
 	sess := session.Must(session.NewSession())
 	db := dynamo.New(sess, aws.NewConfig().WithRegion(os.Getenv("DYNAMODB_REGION")).WithEndpoint(os.Getenv("DYNAMODB_ENDPOINT")))
-	return &dynamoDb{db: db}
+	return &PaymentRepository{db: db}
 }
 
-func (p *dynamoDb) FindPayment(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
+func (p *PaymentRepository) Close() {
+	fmt.Println("DynamoDB close NoOp")
+}
+
+func (p *PaymentRepository) FindPayment(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
 	var payments []*domain.Payment
 	table := p.db.Table("Payment")
 
@@ -34,7 +38,7 @@ func (p *dynamoDb) FindPayment(ctx context.Context, customerId int32, orderDateF
 }
 
 // 決済データの登録
-func (p *dynamoDb) PutPayment(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
+func (p *PaymentRepository) PutPayment(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
 		fmt.Printf("Failed to put item[%v]\n", err)
@@ -44,7 +48,7 @@ func (p *dynamoDb) PutPayment(ctx context.Context, model *domain.Payment) (*doma
 }
 
 // OrderNoに該当する決済データを取得
-func (p *dynamoDb) GetPayment(ctx context.Context, orderNo string) (*domain.Payment, error) {
+func (p *PaymentRepository) GetPayment(ctx context.Context, orderNo string) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	var result domain.Payment
 	if err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result); err != nil {
@@ -57,7 +61,7 @@ func (p *dynamoDb) GetPayment(ctx context.Context, orderNo string) (*domain.Paym
 }
 
 // orderNoに該当する決済データ論理を削除
-func (p *dynamoDb) DeletePayment(ctx context.Context, orderNo string) error {
+func (p *PaymentRepository) DeletePayment(ctx context.Context, orderNo string) error {
 	table := p.db.Table("Payment")
 
 	var result domain.Payment
@@ -65,7 +69,7 @@ func (p *dynamoDb) DeletePayment(ctx context.Context, orderNo string) error {
 }
 
 // 履歴の登録
-func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.Payment) error {
+func (p *PaymentRepository) PutPaymentHistory(ctx context.Context, model *domain.Payment) error {
 	table := p.db.Table("PaymentAllocateHistory")
 	if err := table.Put(model).If("attribute_not_exists(RequestId)").RunWithContext(ctx); err != nil {
 		return err
@@ -74,7 +78,7 @@ func (p *dynamoDb) PutPaymentHistory(ctx context.Context, model *domain.Payment)
 }
 
 // シーケンス取得
-func (p *dynamoDb) Sequence(ctx context.Context) (*int, error) {
+func (p *PaymentRepository) Sequence(ctx context.Context) (*int, error) {
 	var counter struct {
 		Name           string
 		SequenceNumber int
