@@ -1,0 +1,62 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: nautible-app-ms-payment
+build:
+  artifacts:
+    - image: nautible-app-ms-payment
+      custom:
+        buildCommand: ./scripts/build_payment.sh aws
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - ".github/**"
+            - "api/**"
+            - "assets/**"
+            - "cmd/credit/**"
+            - "scripts/**"
+            - "**/go.sum"
+            - ".gitignore"
+            - "LICENSE"
+            - "NOTICE"
+            - "*.md"
+    - image: nautible-app-ms-payment-credit
+      custom:
+        buildCommand: ./scripts/build_credit.sh aws
+        dependencies:
+          paths:
+            - "."
+          ignore:
+            - ".github/**"
+            - "api/**"
+            - "assets/**"
+            - "cmd/payment/**"
+            - "scripts/**"
+            - "**/go.sum"
+            - ".gitignore"
+            - "LICENSE"
+            - "NOTICE"
+            - "*.md"
+  local:
+    push: false
+    useBuildkit: true
+deploy:
+  kustomize:
+    paths:
+      - ../nautible-app-ms-payment-manifest/overlays/aws/local-dev
+
+profiles:
+- name: aws
+- name: azure
+  patches:
+  - op: replace
+    path: /build/artifacts/0/custom/buildCommand
+    value: ./scripts/build_payment.sh azure
+  - op: replace
+    path: /build/artifacts/1/custom/buildCommand
+    value: ./scripts/build_credit.sh azure
+  deploy:
+    kustomize:
+      paths:
+        - ../nautible-app-ms-payment-manifest/overlays/azure/local-dev
