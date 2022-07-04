@@ -29,6 +29,7 @@
 代引き決済の場合は本サービスのみで処理を完結する
 
 ### 補足事項
+
 DaprのServiceInvocationの技術サンプルのため、サービスをCreditとPaymentの2つに分け、別プロセスで実行するようにしています。
 
 ## ディレクトリ構成
@@ -39,17 +40,8 @@ DaprのServiceInvocationの技術サンプルのため、サービスをCredit�
 
 ### skaffoldによるアプリケーション起動
 
-Payment
-
 ```bash
-cd scripts/payment
-./skaffold.sh (aws|azure)
-```
-
-Credit
-
-```bash
-cd scripts/credit
+cd scripts
 ./skaffold.sh (aws|azure)
 ```
 
