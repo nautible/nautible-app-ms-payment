@@ -6,7 +6,7 @@ type Payment struct {
 	PaymentNo   string `json:"paymentNo"`
 	PaymentType string `json:"paymentType" validate:"required"`
 	OrderNo     string `json:"orderNo" validate:"required,len=11"`
-	OrderDate   string `json:"orderDate" validate:"required,datetime=2006-01-02T03:04:05"`
+	OrderDate   string `json:"orderDate" validate:"required,datetime=2006-01-02T15:04:05"`
 	AcceptNo    string `json:"acceptNo"`
 	AcceptDate  string `json:"acceptDate"`
 	CustomerId  int32  `json:"customerId" validate:"required,gte=0"`
