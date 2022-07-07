@@ -50,6 +50,7 @@ kubectl apply -k overlays/(aws|azure)/local-dev/dependencies
 cd scripts
 ./skaffold.sh (aws|azure)
 ```
+※wslなどのLinux環境で実行することを前提としています
 
 ## アプリ構築手順
 
