@@ -113,8 +113,8 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/nautible-app-ms-payment-manifest
         git checkout -b $tag
-        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:'$IMAGE_TAG'/' ./payment/base/payment-deploy.yaml 
-        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:'$IMAGE_TAG'/' ./credit/base/payment-credit-deploy.yaml 
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:'$IMAGE_TAG'/' ./base/payment-deploy.yaml 
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:'$IMAGE_TAG'/' ./base/payment-credit-deploy.yaml 
         git config user.name github-actions[bot]
         git config user.email github-actions[bot]@users.noreply.github.com
         git add .
