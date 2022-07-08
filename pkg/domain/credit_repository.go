@@ -8,4 +8,5 @@ type CreditRepository interface {
 	GetCreditPayment(context.Context, string) (*CreditPayment, error)
 	DeleteCreditPayment(context.Context, string) error
 	Sequence(context.Context) (*int, error)
+	Close()
 }

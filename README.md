@@ -10,6 +10,7 @@
 - Dapr非同期通信
   - net/httpパッケージで作成したHTTPサーバーでCloudEvents(application/octet-stream)の受信処理（DaprSDKは未使用）
 - AWSSDKを利用したDynamoDBアクセス
+- MongoDBクライアントを利用したCosmosDBアクセス
 
 ## アーキテクチャ図
 
@@ -17,14 +18,19 @@
 
 ## 機能
 
-- credit
-  - クレジット決済を行うダミーサービス
-    - 決済登録
-    - 決済キャンセル（論理削除）
-- payment
-  - 外部のサービスが決済サービスを呼び出すためのエンドポイント
+### Credit
 
-なお、paymentとcreditはDaprのServiceInvocationの技術サンプルのため別プロセスで実行するようにしています。
+クレジット決済を行うダミーサービス  
+決済手段がCREDITの場合、paymentサービスから内部的に呼び出される
+
+### Payment
+
+外部のサービスが決済サービスを呼び出すためのエンドポイント  
+代引き決済の場合は本サービスのみで処理を完結する
+
+### 補足事項
+
+DaprのServiceInvocationの技術サンプルのため、サービスをCreditとPaymentの2つに分け、別プロセスで実行するようにしています。
 
 ## ディレクトリ構成
 
@@ -32,21 +38,19 @@
 
 ## サンプルアプリ利用手順
 
+### アプリケーション依存サービスの起動
+manifestリポジトリでマニフェストを適用する
+
+```bash
+kubectl apply -k overlays/(aws|azure)/local-dev/dependencies
+```
 ### skaffoldによるアプリケーション起動
 
-Payment
-
 ```bash
-cd scripts/payment
-./skaffold.sh
+cd scripts
+./skaffold.sh (aws|azure)
 ```
-
-Credit
-
-```bash
-cd scripts/credit
-./skaffold.sh
-```
+※wslなどのLinux環境で実行することを前提としています
 
 ## アプリ構築手順
 
