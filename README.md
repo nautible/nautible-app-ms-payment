@@ -38,12 +38,19 @@ DaprのServiceInvocationの技術サンプルのため、サービスをCredit�
 
 ## サンプルアプリ利用手順
 
+### アプリケーション依存サービスの起動
+manifestリポジトリでマニフェストを適用する
+
+```bash
+kubectl apply -k overlays/(aws|azure)/local-dev/dependencies
+```
 ### skaffoldによるアプリケーション起動
 
 ```bash
 cd scripts
 ./skaffold.sh (aws|azure)
 ```
+※wslなどのLinux環境で実行することを前提としています
 
 ## アプリ構築手順
 
