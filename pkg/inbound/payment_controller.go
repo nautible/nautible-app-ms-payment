@@ -86,6 +86,7 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 		}
 		json.Unmarshal(dec, &restCreatePayment)
 	}
+	fmt.Println("cloudEvents done")
 
 	// 入力データの取得
 	var model domain.Payment

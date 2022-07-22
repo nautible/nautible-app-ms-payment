@@ -36,19 +36,23 @@ func NewPaymentService(payment *PaymentRepository, credit *CreditMessage, order 
 // バックエンドサービスに支払作成処理を投げ、結果をOrderに返す
 func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 	// バリデート
+	fmt.Println("CreatePayment")
 	var orderResponse Order
 	result := validate(model)
+	fmt.Println("validate done result : " + result)
 	if result != "" {
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId
 		orderResponse.Message = result
 		orderResponse.Status = http.StatusBadRequest
+		fmt.Println("validate response : " + result)
 		svc.order.Publish(ctx, &orderResponse)
 		return
 	}
 
 	// 冪等性担保 履歴テーブルへの登録
 	if err := svc.payment.PutPaymentHistory(ctx, model); err != nil {
+		fmt.Println("PutPaymentHistory error : " + err.Error())
 		orderResponse.ProcessType = string(TypePayment)
 		orderResponse.RequestId = model.RequestId
 		if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
@@ -60,12 +64,15 @@ func (svc *PaymentService) CreatePayment(ctx context.Context, model *Payment) {
 			orderResponse.Status = http.StatusInternalServerError
 			orderResponse.Message = messsageFormat(err.Error())
 		}
+		fmt.Println("PutPaymentHistory error publish : " + err.Error())
 		svc.order.Publish(ctx, &orderResponse)
 		return
 	}
 
 	// バックエンドの決済処理を呼び出す
+	fmt.Println("start payment")
 	orderResponse = *createPayment(ctx, svc, model)
+	fmt.Println("end payment")
 
 	// レスポンスをOrderに送信
 	svc.order.Publish(ctx, &orderResponse)
@@ -149,7 +156,9 @@ func createPayment(ctx context.Context, svc *PaymentService, model *Payment) *Or
 		creditModel.OrderDate = model.OrderDate
 		creditModel.CustomerId = model.CustomerId
 		creditModel.TotalPrice = model.TotalPrice
+		fmt.Println("start credit")
 		creditResponse, err := svc.credit.CreateCreditPayment(ctx, &creditModel)
+		fmt.Println("end credit")
 		if err != nil {
 			orderResponse.ProcessType = string(TypePayment)
 			orderResponse.RequestId = model.RequestId

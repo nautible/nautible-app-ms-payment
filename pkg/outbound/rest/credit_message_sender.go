@@ -45,7 +45,7 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 		return nil, err
 	}
 	defer res.Body.Close()
-
+	fmt.Println("response credit : " + strconv.Itoa(res.StatusCode))
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
 		buf := new(bytes.Buffer)
 		io.Copy(buf, res.Body)
