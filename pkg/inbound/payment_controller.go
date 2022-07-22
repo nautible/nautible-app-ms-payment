@@ -69,7 +69,8 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	// CloudEventsで受け取ったデータを構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
-	fmt.Println("doCreate : " + buf.String())
+	//fmt.Println("doCreate : " + buf.String())
+	fmt.Println("doCreate")
 	var cloudEvents CloudEvents
 	fmt.Println("...")
 	var restCreatePayment server.RestCreatePayment
