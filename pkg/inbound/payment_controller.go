@@ -69,22 +69,29 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	// CloudEventsで受け取ったデータを構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
-	fmt.Println("request : " + buf.String())
+	fmt.Println("doCreate : " + buf.String())
 	var cloudEvents CloudEvents
 	var restCreatePayment server.RestCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
+	fmt.Println("Unmarshal")
+	fmt.Println("cloudEvents.Data : " + cloudEvents.Data)
+	fmt.Println("cloudEvents.DataBase64 : " + cloudEvents.DataBase64)
 	if cloudEvents.Data != "" {
+		fmt.Println("cloudEvents.Data json.Unmarshal start")
 		dec := []byte(cloudEvents.Data)
 		json.Unmarshal(dec, &restCreatePayment)
+		fmt.Println("cloudEvents.Data json.Unmarshal end")
 	}
 	if cloudEvents.DataBase64 != "" {
+		fmt.Println("cloudEvents.DataBase64 json.Unmarshal start")
 		dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("err" + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		json.Unmarshal(dec, &restCreatePayment)
+		fmt.Println("cloudEvents.DataBase64 json.Unmarshal end")
 	}
 	fmt.Println("cloudEvents done")
 
@@ -109,7 +116,7 @@ func doRejectCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentS
 	// CloudEventsで受け取ったバイナリデータ（Base64）を構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
-	fmt.Println("request : " + buf.String())
+	fmt.Println("doRejectCreate : " + buf.String())
 	var cloudEvents CloudEvents
 	var restRejectCreatePayment server.RestRejectCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
