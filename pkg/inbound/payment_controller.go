@@ -71,9 +71,14 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	io.Copy(buf, body)
 	fmt.Println("doCreate : " + buf.String())
 	var cloudEvents CloudEvents
+	fmt.Println("...")
 	var restCreatePayment server.RestCreatePayment
-	json.Unmarshal(buf.Bytes(), &cloudEvents)
-	fmt.Println("Unmarshal")
+	fmt.Println("Unmarshal start")
+	err := json.Unmarshal(buf.Bytes(), &cloudEvents)
+	fmt.Println("Unmarshal end")
+	if err != nil {
+		fmt.Println("error : " + err.Error())
+	}
 	fmt.Println("cloudEvents.Data : " + cloudEvents.Data)
 	fmt.Println("cloudEvents.DataBase64 : " + cloudEvents.DataBase64)
 	if cloudEvents.Data != "" {
