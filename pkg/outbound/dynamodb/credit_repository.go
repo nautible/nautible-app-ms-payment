@@ -2,10 +2,10 @@ package dynamodb
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
+	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -23,14 +23,14 @@ func NewCreditRepository() domain.CreditRepository {
 }
 
 func (p *CreditRepository) Close() {
-	fmt.Println("DynamoDB close NoOp")
+	zap.S().Infow("DynamoDB close NoOp")
 }
 
 // 決済データの登録
 func (p *CreditRepository) PutCreditPayment(ctx context.Context, model *domain.CreditPayment) (*domain.CreditPayment, error) {
 	table := p.db.Table("CreditPayment")
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
-		fmt.Printf("Failed to put item[%v]\n", err)
+		zap.S().Errorw("Failed to put item : " + err.Error())
 		return nil, err
 	}
 	return model, nil
@@ -41,6 +41,7 @@ func (p *CreditRepository) GetCreditPayment(ctx context.Context, acceptNo string
 	table := p.db.Table("CreditPayment")
 	var result domain.CreditPayment
 	if err := table.Get("AcceptNo", acceptNo).OneWithContext(ctx, &result); err != nil {
+		zap.S().Errorw("Failed to get item : " + err.Error())
 		return nil, err
 	}
 	if result.DeleteFlag {
@@ -66,6 +67,7 @@ func (p *CreditRepository) Sequence(ctx context.Context) (*int, error) {
 	table := p.db.Table("Sequence")
 	err := table.Update("Name", "CreditPayment").Add("SequenceNumber", 1).ValueWithContext(ctx, &counter)
 	if err != nil {
+		zap.S().Errorw("Failed to update sequence : " + err.Error())
 		return nil, err
 	}
 	return &counter.SequenceNumber, err

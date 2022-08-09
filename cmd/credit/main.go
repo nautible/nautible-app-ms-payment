@@ -12,6 +12,8 @@ import (
 	controller "github.com/nautible/nautible-app-ms-payment/pkg/inbound"
 	cosmosdb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/cosmosdb"
 	dynamodb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/dynamodb"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
@@ -20,6 +22,13 @@ import (
 var target string // -ldflags '-X main.target=(aws|azure)'
 
 func main() {
+	logger, err := logConfig()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+	zap.ReplaceGlobals(logger)
+
 	var port = flag.Int("port", 8080, "Port for test HTTP server")
 	flag.Parse()
 
@@ -61,4 +70,25 @@ func createController(target string) (*controller.CreditController, *domain.Cred
 
 	creditController := controller.NewCreditController(svc)
 	return creditController, &repo
+}
+
+func logConfig() (*zap.Logger, error) {
+	config := zap.Config{
+		OutputPaths:      []string{"stderr"},
+		ErrorOutputPaths: []string{"stderr"},
+		Level:            zap.NewAtomicLevelAt(zap.DebugLevel),
+		Encoding:         "console",
+		EncoderConfig: zapcore.EncoderConfig{
+			LevelKey:   "level",
+			TimeKey:    "timestamp",
+			CallerKey:  "caller",
+			MessageKey: "msg",
+		},
+	}
+
+	logger, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+	return logger, nil
 }

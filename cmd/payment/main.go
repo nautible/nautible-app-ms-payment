@@ -9,11 +9,20 @@ import (
 	cosmosdb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/cosmosdb"
 	dynamodb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/dynamodb"
 	rest "github.com/nautible/nautible-app-ms-payment/pkg/outbound/rest"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var target string // -ldflags '-X main.target=(aws|azure)'
 
 func main() {
+	logger, err := logConfig()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+	zap.ReplaceGlobals(logger)
+
 	controller, repo := createController(target)
 	defer (*repo).Close()
 
@@ -44,4 +53,25 @@ func createController(target string) (*controller.PaymentController, *domain.Pay
 	service := domain.NewPaymentService(&repo, &creditMessage, &orderMessage)
 	controller := controller.NewPaymentController(service)
 	return controller, &repo
+}
+
+func logConfig() (*zap.Logger, error) {
+	config := zap.Config{
+		OutputPaths:      []string{"stderr"},
+		ErrorOutputPaths: []string{"stderr"},
+		Level:            zap.NewAtomicLevelAt(zap.DebugLevel),
+		Encoding:         "console",
+		EncoderConfig: zapcore.EncoderConfig{
+			LevelKey:   "level",
+			TimeKey:    "timestamp",
+			CallerKey:  "caller",
+			MessageKey: "msg",
+		},
+	}
+
+	logger, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+	return logger, nil
 }
