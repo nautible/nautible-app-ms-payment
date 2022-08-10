@@ -69,10 +69,14 @@ func NewDevelopmentLogger() (*zap.Logger, error) {
 		Level:            zap.NewAtomicLevelAt(zap.DebugLevel),
 		Encoding:         "console",
 		EncoderConfig: zapcore.EncoderConfig{
-			LevelKey:   "level",
-			TimeKey:    "timestamp",
-			CallerKey:  "caller",
-			MessageKey: "msg",
+			LevelKey:       "level",
+			TimeKey:        "timestamp",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			EncodeLevel:    zapcore.CapitalLevelEncoder,
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.StringDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
 		},
 	}
 
