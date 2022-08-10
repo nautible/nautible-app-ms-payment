@@ -90,10 +90,14 @@ func NewProductionLogger() (*zap.Logger, error) {
 		Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
 		Encoding:         "json",
 		EncoderConfig: zapcore.EncoderConfig{
-			LevelKey:   "level",
-			TimeKey:    "timestamp",
-			CallerKey:  "caller",
-			MessageKey: "msg",
+			LevelKey:       "level",
+			TimeKey:        "timestamp",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			EncodeLevel:    zapcore.CapitalLevelEncoder,
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.StringDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
 		},
 	}
 
