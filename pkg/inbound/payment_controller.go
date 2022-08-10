@@ -15,10 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	Log *zap.Logger
-)
-
 type CloudEvents struct {
 	Pubsubname      string `json:"pubsubname"`
 	Id              string `json:"id"`
@@ -74,8 +70,7 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	// CloudEventsで受け取ったデータを構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
-	Log.Info("")
-	fmt.Println("request : " + buf.String())
+	zap.S().Infow("request : " + buf.String())
 	var cloudEvents CloudEvents
 	var restCreatePayment server.RestCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
