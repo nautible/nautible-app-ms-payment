@@ -81,7 +81,7 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	if cloudEvents.DataBase64 != "" {
 		dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
 		if err != nil {
-			fmt.Println(err)
+			zap.S().Errorw("Base64 Decode error : " + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

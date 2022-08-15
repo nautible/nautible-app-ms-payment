@@ -2,7 +2,6 @@ package dynamodb
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
@@ -42,7 +41,7 @@ func (p *PaymentRepository) FindPayment(ctx context.Context, customerId int32, o
 func (p *PaymentRepository) PutPayment(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
-		fmt.Printf("Failed to put item[%v]\n", err)
+		zap.S().Errorw("Failed to put item : " + err.Error())
 		return nil, err
 	}
 	return model, nil

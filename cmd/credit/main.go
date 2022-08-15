@@ -40,7 +40,7 @@ func main() {
 
 	swagger, err := server.GetSwagger()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		zap.S().Errorw("Error loading swagger spec : " + err.Error())
 		os.Exit(1)
 	}
 
