@@ -17,13 +17,7 @@ import (
 var target string // -ldflags '-X main.target=(aws|azure)'
 
 func main() {
-	var logger *zap.Logger
-	var err error
-	if os.Getenv("LOG_ENV") == "Development" {
-		logger, err = NewDevelopmentLogger()
-	} else {
-		logger, err = NewProductionLogger()
-	}
+	logger, err := NewLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_FORMAT"))
 	if err != nil {
 		panic(err)
 	}
@@ -62,37 +56,22 @@ func createController(target string) (*controller.PaymentController, *domain.Pay
 	return controller, &repo
 }
 
-func NewDevelopmentLogger() (*zap.Logger, error) {
-	config := zap.Config{
-		OutputPaths:      []string{"stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-		Level:            zap.NewAtomicLevelAt(zap.DebugLevel),
-		Encoding:         "console",
-		EncoderConfig: zapcore.EncoderConfig{
-			LevelKey:       "level",
-			TimeKey:        "timestamp",
-			CallerKey:      "caller",
-			MessageKey:     "msg",
-			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.StringDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-		},
+func NewLogger(logLevel string, logFormat string) (*zap.Logger, error) {
+	if logLevel == "" {
+		logLevel = "DEBUG"
 	}
-
-	logger, err := config.Build()
+	level, err := zap.ParseAtomicLevel(logLevel)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return logger, nil
-}
-
-func NewProductionLogger() (*zap.Logger, error) {
+	if logFormat == "" {
+		logFormat = "console"
+	}
 	config := zap.Config{
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
-		Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
-		Encoding:         "json",
+		Level:            level,
+		Encoding:         logFormat,
 		EncoderConfig: zapcore.EncoderConfig{
 			LevelKey:       "level",
 			TimeKey:        "timestamp",
