@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
+	"go.uber.org/zap"
 
 	client "github.com/nautible/nautible-app-ms-payment/pkg/generate/creditclient"
 )
@@ -35,7 +35,7 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 	restCreatePayment.TotalPrice = request.TotalPrice
 	requestJson, err := json.Marshal(restCreatePayment)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("JSON Marshal error : " + err.Error())
 		return nil, err
 	}
 	buf := bytes.NewBuffer(requestJson)

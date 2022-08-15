@@ -2,7 +2,6 @@ package cosmosdb
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	options "go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 type creditRepository struct {
@@ -25,17 +25,17 @@ func NewCreditRepository() domain.CreditRepository {
 	clientOptions := options.Client().ApplyURI(mongoDBConnectionString).SetDirect(true)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
-		log.Fatalf("Client create error %v", err)
+		zap.S().Fatalw("Client create error : " + err.Error())
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatalf("unable to initialize connection %v", err)
+		zap.S().Fatalw("unable to initialize connection : " + err.Error())
 	}
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Fatalf("unable to connect %v", err)
+		zap.S().Fatalw("unable to connect : " + err.Error())
 	}
 
 	return &creditRepository{db: client}
@@ -73,15 +73,15 @@ func (p *creditRepository) GetCreditPayment(ctx context.Context, acceptNo string
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	rs, err := collection.Find(ctx, filter)
 	if err != nil {
-		log.Fatalf("failed to list payment(s) %v", err)
+		zap.S().Fatalw("failed to list payment(s) : " + err.Error())
 	}
 	var payments []domain.CreditPayment
 	err = rs.All(ctx, &payments)
 	if err != nil {
-		log.Fatalf("failed to list payment(s) %v", err)
+		zap.S().Fatalw("failed to list payment(s) : " + err.Error())
 	}
 	if len(payments) == 0 {
-		fmt.Println("no todos found")
+		zap.S().Infow("no todos found")
 		return nil, nil
 	}
 	if payments[0].DeleteFlag {
@@ -96,7 +96,9 @@ func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo str
 	update := bson.D{{Key: "DeleteFlag", Value: true}}
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	result, err := collection.UpdateOne(ctx, filter, update)
-	fmt.Println("added CreditPayment", result.UpsertedID)
+	if result.UpsertedID != nil {
+		zap.S().Infow("added CreditPayment ID : " + result.UpsertedID.(string))
+	}
 	return err
 }
 

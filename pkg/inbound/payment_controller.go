@@ -12,6 +12,7 @@ import (
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
 	server "github.com/nautible/nautible-app-ms-payment/pkg/generate/paymentserver"
+	"go.uber.org/zap"
 )
 
 type CloudEvents struct {
@@ -69,7 +70,7 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	// CloudEventsで受け取ったデータを構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
-	fmt.Println("request : " + buf.String())
+	zap.S().Infow("request : " + buf.String())
 	var cloudEvents CloudEvents
 	var restCreatePayment server.RestCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
@@ -80,7 +81,7 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	if cloudEvents.DataBase64 != "" {
 		dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
 		if err != nil {
-			fmt.Println(err)
+			zap.S().Errorw("Base64 Decode error : " + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -108,7 +109,7 @@ func doRejectCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentS
 	// CloudEventsで受け取ったバイナリデータ（Base64）を構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
-	fmt.Println("request : " + buf.String())
+	zap.S().Infow("request : " + buf.String())
 	var cloudEvents CloudEvents
 	var restRejectCreatePayment server.RestRejectCreatePayment
 	json.Unmarshal(buf.Bytes(), &cloudEvents)
@@ -119,7 +120,7 @@ func doRejectCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentS
 	if cloudEvents.DataBase64 != "" {
 		dec, err := base64.StdEncoding.DecodeString(cloudEvents.DataBase64)
 		if err != nil {
-			fmt.Println(err)
+			zap.S().Errorw(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
