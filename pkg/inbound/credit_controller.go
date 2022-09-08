@@ -33,10 +33,10 @@ func (p *CreditController) Healthz(w http.ResponseWriter, r *http.Request) {
 // Create Credit
 // (POST /credit)
 func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("start Create")
 	w.Header().Set("Content-Type", "application/json")
 	var req server.RestCreateCreditPayment
 	json.NewDecoder(r.Body).Decode(&req)
-
 	// サービス呼び出し
 	var model domain.CreditPayment
 	model.OrderNo = req.OrderNo
@@ -76,6 +76,7 @@ func (p *CreditController) Update(w http.ResponseWriter, r *http.Request) {
 // Delete credit by AcceptNo
 // (DELETE /credit/{acceptNo})
 func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, acceptNo string) {
+	fmt.Println("start Delete")
 
 	repo := dynamodb.NewCreditRepository()
 	svc := domain.NewCreditService(&repo)
@@ -91,6 +92,7 @@ func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, accept
 // Find credit by AcceptNo
 // (GET /credit/{acceptNo})
 func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request, acceptNo string) {
+	fmt.Println("start GetByAcceptNo")
 	result, err := p.svc.GetCreditPayment(r.Context(), acceptNo)
 	if err != nil {
 		fmt.Println(err)
