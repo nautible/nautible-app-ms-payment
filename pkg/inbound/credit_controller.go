@@ -1,7 +1,6 @@
 package inbound
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -35,7 +34,6 @@ func (p *CreditController) Healthz(w http.ResponseWriter, r *http.Request) {
 // (POST /credit)
 func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	ctx := context.WithValue(r.Context(), "header", r.Header)
 	var req server.RestCreateCreditPayment
 	json.NewDecoder(r.Body).Decode(&req)
 
@@ -45,7 +43,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	model.OrderDate = req.OrderDate
 	model.CustomerId = req.CustomerId
 	model.TotalPrice = req.TotalPrice
-	res, err := p.svc.CreateCreditPayment(ctx, &model)
+	res, err := p.svc.CreateCreditPayment(r.Context(), &model)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
