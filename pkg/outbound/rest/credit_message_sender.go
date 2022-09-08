@@ -24,8 +24,6 @@ func NewCreditMessageSender() domain.CreditMessage {
 
 // クレジット決済登録を依頼するメッセージ
 func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *domain.CreditPayment) (*domain.CreditPayment, error) {
-	header := ctx.Value("header").(http.Header)
-
 	var restCreatePayment client.RestCreateCreditPayment
 	restCreatePayment.CustomerId = request.CustomerId
 	restCreatePayment.OrderDate = request.OrderDate
@@ -37,6 +35,8 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 		return nil, err
 	}
 	buf := bytes.NewBuffer(requestJson)
+
+	header := ctx.Value("header").(http.Header)
 	req, err := client.NewCreateRequestWithBody("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method", "application/json", buf)
 	if err != nil {
 		return nil, err
@@ -47,9 +47,11 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 	req.Header.Add("x-b3-parentspanid", header.Get("x-b3-parentspanid"))
 	req.Header.Add("x-b3-sampled", header.Get("x-b3-sampled"))
 	req.Header.Add("x-b3-flags", header.Get("x-b3-flags"))
-	client := &http.Client{}
-	res, err := client.Do(req)
+	req = req.WithContext(ctx)
+	c := &http.Client{}
+	res, err := c.Do(req)
 	if err != nil {
+		fmt.Errorf(err)
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -78,8 +80,9 @@ func (p *CreditMessageSender) GetByAcceptNo(ctx context.Context, acceptNo string
 	req.Header.Add("x-b3-parentspanid", header.Get("x-b3-parentspanid"))
 	req.Header.Add("x-b3-sampled", header.Get("x-b3-sampled"))
 	req.Header.Add("x-b3-flags", header.Get("x-b3-flags"))
-	client := &http.Client{}
-	res, err := client.Do(req)
+	req = req.WithContext(ctx)
+	c := &http.Client{}
+	res, err := c.Do(req)
 	if err != nil {
 		return &domain.CreditPayment{}, err
 	}
@@ -103,6 +106,7 @@ func (p *CreditMessageSender) DeleteByAcceptNo(ctx context.Context, acceptNo str
 	req.Header.Add("x-b3-parentspanid", header.Get("x-b3-parentspanid"))
 	req.Header.Add("x-b3-sampled", header.Get("x-b3-sampled"))
 	req.Header.Add("x-b3-flags", header.Get("x-b3-flags"))
+	req = req.WithContext(ctx)
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
