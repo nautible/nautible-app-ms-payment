@@ -37,7 +37,7 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 	buf := bytes.NewBuffer(requestJson)
 
 	header := ctx.Value("header").(http.Header)
-	req, err := client.NewCreateRequestWithBody("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method", "application/json", buf)
+	req, err := client.NewCreateRequestWithBody("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method/", "application/json", buf)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 func (p *CreditMessageSender) GetByAcceptNo(ctx context.Context, acceptNo string) (*domain.CreditPayment, error) {
 	header := ctx.Value("header").(http.Header)
 	// http.Response として返却
-	req, err := client.NewGetByAcceptNoRequest("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method", acceptNo)
+	req, err := client.NewGetByAcceptNoRequest("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method/", acceptNo)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (p *CreditMessageSender) GetByAcceptNo(ctx context.Context, acceptNo string
 func (p *CreditMessageSender) DeleteByAcceptNo(ctx context.Context, acceptNo string) error {
 	header := ctx.Value("header").(http.Header)
 	// http.Response として返却
-	req, err := client.NewDeleteRequest("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method", acceptNo)
+	req, err := client.NewDeleteRequest("http://localhost:3500/v1.0/invoke/nautible-app-ms-payment-credit/method/", acceptNo)
 	if err != nil {
 		return err
 	}
