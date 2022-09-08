@@ -51,7 +51,7 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 	c := &http.Client{}
 	res, err := c.Do(req)
 	if err != nil {
-		fmt.Errorf(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	defer res.Body.Close()
