@@ -83,7 +83,7 @@ func (p *paymentRepository) PutPayment(ctx context.Context, model *domain.Paymen
 		return nil, err
 	}
 	if result.InsertedID != nil {
-		zap.S().Infow("added Payment : " + result.InsertedID.(string))
+		zap.S().Infof("added Payment : %v", result.InsertedID)
 	}
 	return model, nil
 }
@@ -110,7 +110,7 @@ func (p *paymentRepository) PutPaymentHistory(ctx context.Context, model *domain
 		return err
 	}
 	if result.InsertedID != nil {
-		zap.S().Infow("added PaymentHistory : " + result.InsertedID.(string))
+		zap.S().Infof("added PaymentHistory : %v", result.InsertedID)
 	}
 	return nil
 }
@@ -146,7 +146,7 @@ func (p *paymentRepository) DeletePayment(ctx context.Context, orderNo string) e
 	collection := p.db.Database("Payment").Collection("Payment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	if result.UpsertedID != nil {
-		zap.S().Infow("added Payment : " + result.UpsertedID.(string))
+		zap.S().Infof("deleted Payment : %v", result.UpsertedID)
 	}
 	return err
 }

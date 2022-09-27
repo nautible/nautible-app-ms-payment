@@ -2,7 +2,6 @@ package cosmosdb
 
 import (
 	"context"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -46,7 +45,6 @@ func (p *creditRepository) Close() {
 }
 
 func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.CreditPayment) (*domain.CreditPayment, error) {
-	log.Println("start PutCreditPayment")
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	doc := bson.D{
 		{Key: "AcceptNo", Value: model.AcceptNo},
@@ -59,10 +57,12 @@ func (p *creditRepository) PutCreditPayment(ctx context.Context, model *domain.C
 	}
 	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
-		log.Printf("Failed to put item[%v]\n", err)
+		zap.S().Fatalw("failed to put payment(s) : " + err.Error())
 		return nil, err
 	}
-	log.Println("added CreditPayment", result.InsertedID)
+	if result.InsertedID != nil {
+		zap.S().Infof("added CreditPayment ID : %v", result.InsertedID)
+	}
 	return model, nil
 }
 
@@ -97,7 +97,7 @@ func (p *creditRepository) DeleteCreditPayment(ctx context.Context, acceptNo str
 	collection := p.db.Database("Payment").Collection("CreditPayment")
 	result, err := collection.UpdateOne(ctx, filter, update)
 	if result.UpsertedID != nil {
-		zap.S().Infow("added CreditPayment ID : " + result.UpsertedID.(string))
+		zap.S().Infof("deleted CreditPayment ID : %v", result.UpsertedID)
 	}
 	return err
 }
