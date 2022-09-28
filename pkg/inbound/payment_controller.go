@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"sync"
 
@@ -47,7 +46,7 @@ func (p *PaymentController) Create(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		doCreate(w, r, p.svc)
 	default:
-		log.Fatalf("%s Method not allowed.\n", r.Method)
+		zap.S().Fatalf("%s Method not allowed.\n", r.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
@@ -57,7 +56,7 @@ func (p *PaymentController) RejectCreate(w http.ResponseWriter, r *http.Request)
 	case "POST":
 		doRejectCreate(w, r, p.svc)
 	default:
-		log.Fatalf("%s Method not allowed.\n", r.Method)
+		zap.S().Fatalf("%s Method not allowed.\n", r.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
