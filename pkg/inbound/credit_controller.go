@@ -9,6 +9,7 @@ import (
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
 	server "github.com/nautible/nautible-app-ms-payment/pkg/generate/creditserver"
 	dynamodb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/dynamodb"
+	"go.uber.org/zap"
 )
 
 type CreditController struct {
@@ -45,7 +46,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	model.TotalPrice = req.TotalPrice
 	res, err := p.svc.CreateCreditPayment(r.Context(), &model)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("CreateCreditPayment Response Error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +59,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	result.TotalPrice = &res.TotalPrice
 	resultJson, err := json.Marshal(result)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("JSON Marshal error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -81,7 +82,7 @@ func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, accept
 	svc := domain.NewCreditService(&repo)
 	err := svc.DeleteCreditPayment(r.Context(), acceptNo)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("DeleteCreditPayment Response Error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -93,7 +94,7 @@ func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, accept
 func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request, acceptNo string) {
 	result, err := p.svc.GetCreditPayment(r.Context(), acceptNo)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("GetCreditPayment Response Error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	if result == nil {
@@ -102,7 +103,7 @@ func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request,
 	}
 	resultJson, err := json.Marshal(result)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("JSON Marshal error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)

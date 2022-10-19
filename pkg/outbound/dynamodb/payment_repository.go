@@ -2,10 +2,10 @@ package dynamodb
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
+	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -23,7 +23,7 @@ func NewPaymentRepository() domain.PaymentRepository {
 }
 
 func (p *PaymentRepository) Close() {
-	fmt.Println("DynamoDB close NoOp")
+	zap.S().Infow("DynamoDB close NoOp")
 }
 
 func (p *PaymentRepository) FindPayment(ctx context.Context, customerId int32, orderDateFrom string, orderDateTo string) ([]*domain.Payment, error) {
@@ -31,7 +31,7 @@ func (p *PaymentRepository) FindPayment(ctx context.Context, customerId int32, o
 	table := p.db.Table("Payment")
 
 	if err := table.Get("CustomerId", customerId).Range("OrderDate", dynamo.GreaterOrEqual, orderDateFrom).Range("OrderDate", dynamo.LessOrEqual, orderDateTo).Index("GSI-CustomerId").AllWithContext(ctx, &payments); err != nil {
-		fmt.Printf("Failed to get item[%v]\n", err)
+		zap.S().Errorw("Failed to get item : " + err.Error())
 		return nil, err
 	}
 	return payments, nil
@@ -41,7 +41,7 @@ func (p *PaymentRepository) FindPayment(ctx context.Context, customerId int32, o
 func (p *PaymentRepository) PutPayment(ctx context.Context, model *domain.Payment) (*domain.Payment, error) {
 	table := p.db.Table("Payment")
 	if err := table.Put(model).RunWithContext(ctx); err != nil {
-		fmt.Printf("Failed to put item[%v]\n", err)
+		zap.S().Errorw("Failed to put item : " + err.Error())
 		return nil, err
 	}
 	return model, nil
@@ -52,6 +52,7 @@ func (p *PaymentRepository) GetPayment(ctx context.Context, orderNo string) (*do
 	table := p.db.Table("Payment")
 	var result domain.Payment
 	if err := table.Get("OrderNo", orderNo).OneWithContext(ctx, &result); err != nil {
+		zap.S().Errorw("Failed to get item : " + err.Error())
 		return nil, err
 	}
 	if result.DeleteFlag {
@@ -72,6 +73,7 @@ func (p *PaymentRepository) DeletePayment(ctx context.Context, orderNo string) e
 func (p *PaymentRepository) PutPaymentHistory(ctx context.Context, model *domain.Payment) error {
 	table := p.db.Table("PaymentAllocateHistory")
 	if err := table.Put(model).If("attribute_not_exists(RequestId)").RunWithContext(ctx); err != nil {
+		zap.S().Errorw("Failed to put item : " + err.Error())
 		return err
 	}
 	return nil
@@ -86,6 +88,7 @@ func (p *PaymentRepository) Sequence(ctx context.Context) (*int, error) {
 	table := p.db.Table("Sequence")
 	err := table.Update("Name", "Payment").Add("SequenceNumber", 1).ValueWithContext(ctx, &counter)
 	if err != nil {
+		zap.S().Errorw("Failed to update sequence : " + err.Error())
 		return nil, err
 	}
 	return &counter.SequenceNumber, err

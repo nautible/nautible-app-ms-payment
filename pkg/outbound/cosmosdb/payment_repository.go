@@ -2,13 +2,12 @@ package cosmosdb
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
 	domain "github.com/nautible/nautible-app-ms-payment/pkg/domain"
+	"go.uber.org/zap"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,18 +25,18 @@ func NewPaymentRepository() domain.PaymentRepository {
 	clientOptions := options.Client().ApplyURI(mongoDBConnectionString).SetDirect(true)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
-		log.Fatalf("Client create error %v", err)
+		zap.S().Fatalw("Client create error : " + err.Error())
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatalf("unable to initialize connection %v", err)
+		zap.S().Fatalw("unable to initialize connection : " + err.Error())
 	}
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Fatalf("unable to connect %v", err)
+		zap.S().Fatalw("unable to connect : " + err.Error())
 	}
 
 	return &paymentRepository{db: client}
@@ -54,11 +53,11 @@ func (p *paymentRepository) FindPayment(ctx context.Context, customerId int32, o
 
 	rs, err := collection.Find(ctx, filter)
 	if err != nil {
-		log.Fatalf("failed to list payment(s) %v", err)
+		zap.S().Fatalw("failed to list payment(s) : " + err.Error())
 	}
 	err = rs.All(ctx, &payments)
 	if err != nil {
-		log.Fatalf("failed to list payment(s) %v", err)
+		zap.S().Fatalw("failed to list payment(s) : " + err.Error())
 	}
 	return payments, nil
 }
@@ -80,10 +79,12 @@ func (p *paymentRepository) PutPayment(ctx context.Context, model *domain.Paymen
 	}
 	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
-		fmt.Printf("Failed to put item[%v]\n", err)
+		zap.S().Errorw("Failed to put item : " + err.Error())
 		return nil, err
 	}
-	fmt.Println("added Payment", result.InsertedID)
+	if result.InsertedID != nil {
+		zap.S().Infof("added Payment : %v", result.InsertedID)
+	}
 	return model, nil
 }
 
@@ -105,10 +106,12 @@ func (p *paymentRepository) PutPaymentHistory(ctx context.Context, model *domain
 	}
 	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
-		fmt.Printf("Failed to put item[%v]\n", err)
+		zap.S().Errorw("Failed to put item : " + err.Error())
 		return err
 	}
-	fmt.Println("added PaymentHistory", result.InsertedID)
+	if result.InsertedID != nil {
+		zap.S().Infof("added PaymentHistory : %v", result.InsertedID)
+	}
 	return nil
 }
 
@@ -119,15 +122,15 @@ func (p *paymentRepository) GetPayment(ctx context.Context, orderNo string) (*do
 	collection := p.db.Database("Payment").Collection("Payment")
 	rs, err := collection.Find(ctx, filter)
 	if err != nil {
-		log.Fatalf("failed to list payment(s) %v", err)
+		zap.S().Fatalw("failed to list payment(s) : " + err.Error())
 	}
 	var payments []domain.Payment
 	err = rs.All(ctx, &payments)
 	if err != nil {
-		log.Fatalf("failed to list payment(s) %v", err)
+		zap.S().Fatalw("failed to list payment(s) : " + err.Error())
 	}
 	if len(payments) == 0 {
-		fmt.Println("no todos found")
+		zap.S().Infow("no todos found")
 		return nil, nil
 	}
 	if payments[0].DeleteFlag {
@@ -142,7 +145,9 @@ func (p *paymentRepository) DeletePayment(ctx context.Context, orderNo string) e
 	update := bson.D{{Key: "DeleteFlag", Value: true}}
 	collection := p.db.Database("Payment").Collection("Payment")
 	result, err := collection.UpdateOne(ctx, filter, update)
-	fmt.Println("added Payment", result.UpsertedID)
+	if result.UpsertedID != nil {
+		zap.S().Infof("deleted Payment : %v", result.UpsertedID)
+	}
 	return err
 }
 

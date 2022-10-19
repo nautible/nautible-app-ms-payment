@@ -9,8 +9,8 @@ require (
 	github.com/go-chi/chi/v5 v5.0.0
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/guregu/dynamo v1.15.0
-	github.com/olekukonko/tablewriter v0.0.5
 	go.mongodb.org/mongo-driver v1.9.1
+	go.uber.org/zap v1.22.0
 )
 
 require (
@@ -28,12 +28,13 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect

@@ -2,12 +2,13 @@ name: Go CI Payment and Credit Application
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "develop","feature/*","hotfix/*" ]
     paths: 
       - 'cmd/**'
       - 'pkg/**'
       - 'package/**'
       - '.github/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -23,9 +24,9 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Checkout manifest repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: nautible/nautible-app-ms-payment-manifest
         path: nautible-app-ms-payment-manifest
@@ -105,19 +106,50 @@ jobs:
         docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
         docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
 
-    - name: pull request
-      id: pull-request
+    - name: update feature branch image tag
+      id: update-feature-branch-image-tag
+      if: startsWith(github.ref_name, 'feature/')
       env:
-        tag: update-image-feature-${{ github.sha }}
-        token: ${{ secrets.PAT }}
+        TOKEN: ${{ secrets.PAT }}
+        BRANCH: ${{ github.ref_name }}
+        APP_NAME: payment
       run: |
-        cd $GITHUB_WORKSPACE/nautible-app-ms-payment-manifest
-        git checkout -b $tag
-        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment:'$IMAGE_TAG'/' ./base/payment-deploy.yaml 
-        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-payment-credit:'$IMAGE_TAG'/' ./base/payment-credit-deploy.yaml 
+        cd $GITHUB_WORKSPACE/nautible-app-ms-$APP_NAME-manifest
+        HTTP_STATUS=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $TOKEN" https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/branches/$BRANCH -o /dev/null -w '%{http_code}\n' -s)
+        if [ "$HTTP_STATUS" != '200' ]; then
+          echo 'couldnt find remote branch. skip update manifest.'
+          exit 0
+        fi
+        git fetch origin $BRANCH && git checkout $BRANCH
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./base/$APP_NAME-deploy.yaml 
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:'$IMAGE_TAG'/' ./base/$APP_NAME-credit-deploy.yaml 
+        sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-deploy.yaml 
+        sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-credit-deploy.yaml 
         git config user.name github-actions[bot]
         git config user.email github-actions[bot]@users.noreply.github.com
         git add .
         git commit -m "update manifest"
-        git push --set-upstream origin $tag
-        curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $token" "https://api.github.com/repos/nautible/nautible-app-ms-payment-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$tag'", "base": "main"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
+        git push
+
+    - name: pull request
+      id: pull-request
+      if: github.ref_name == 'develop' || startsWith(github.ref_name, 'hotfix/')
+      env:
+        TOKEN: ${{ secrets.PAT }}
+        BRANCH: ${{ github.ref_name }}
+        TAG: update-image-feature-${{ github.sha }}
+        APP_NAME: payment
+      run: |
+        cd $GITHUB_WORKSPACE/nautible-app-ms-$APP_NAME-manifest
+        git fetch origin $BRANCH && git checkout $BRANCH
+        git checkout -b $TAG $BRANCH
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./base/$APP_NAME-deploy.yaml 
+        sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:'$IMAGE_TAG'/' ./base/$APP_NAME-credit-deploy.yaml 
+        sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-deploy.yaml 
+        sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-credit-deploy.yaml 
+        git config user.name github-actions[bot]
+        git config user.email github-actions[bot]@users.noreply.github.com
+        git add .
+        git commit -m "update manifest"
+        git push --set-upstream origin $TAG
+        curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $TOKEN" "https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$TAG'", "base": "'$BRANCH'"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
