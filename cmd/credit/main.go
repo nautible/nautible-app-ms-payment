@@ -12,6 +12,8 @@ import (
 	controller "github.com/nautible/nautible-app-ms-payment/pkg/inbound"
 	cosmosdb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/cosmosdb"
 	dynamodb "github.com/nautible/nautible-app-ms-payment/pkg/outbound/dynamodb"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
@@ -20,12 +22,19 @@ import (
 var target string // -ldflags '-X main.target=(aws|azure)'
 
 func main() {
+	logger, err := NewLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_FORMAT"))
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+	zap.ReplaceGlobals(logger)
+
 	var port = flag.Int("port", 8080, "Port for test HTTP server")
 	flag.Parse()
 
 	swagger, err := server.GetSwagger()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		zap.S().Errorw("Error loading swagger spec : " + err.Error())
 		os.Exit(1)
 	}
 
@@ -61,4 +70,39 @@ func createController(target string) (*controller.CreditController, *domain.Cred
 
 	creditController := controller.NewCreditController(svc)
 	return creditController, &repo
+}
+
+func NewLogger(logLevel string, logFormat string) (*zap.Logger, error) {
+	if logLevel == "" {
+		logLevel = "DEBUG"
+	}
+	level, err := zap.ParseAtomicLevel(logLevel)
+	if err != nil {
+		panic(err)
+	}
+	if logFormat == "" {
+		logFormat = "console"
+	}
+	config := zap.Config{
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+		Level:            level,
+		Encoding:         logFormat,
+		EncoderConfig: zapcore.EncoderConfig{
+			LevelKey:       "level",
+			TimeKey:        "timestamp",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			EncodeLevel:    zapcore.CapitalLevelEncoder,
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.StringDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
+		},
+	}
+
+	logger, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+	return logger, nil
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 // エラー応答用JSON
@@ -124,7 +125,7 @@ func validate(paymentModel *Payment) string {
 		}
 		e, err := json.Marshal(errorMessage)
 		if err != nil {
-			fmt.Println(err)
+			zap.S().Errorw("JSON Marshal error : " + err.Error())
 			return ""
 		}
 		result := string(e)
@@ -195,7 +196,7 @@ func messsageFormat(message string) string {
 	e, err := json.Marshal(errorMessage)
 	result := string(e)
 	if err != nil {
-		fmt.Println(err)
+		zap.S().Errorw("JSON Marshal Error : " + err.Error())
 		return ""
 	}
 	return result
