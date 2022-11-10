@@ -34,7 +34,6 @@ func (p *CreditController) Healthz(w http.ResponseWriter, r *http.Request) {
 // Create Credit
 // (POST /credit)
 func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("start Create")
 	w.Header().Set("Content-Type", "application/json")
 	var req server.RestCreateCreditPayment
 	json.NewDecoder(r.Body).Decode(&req)
@@ -46,7 +45,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	model.TotalPrice = req.TotalPrice
 	res, err := p.svc.CreateCreditPayment(r.Context(), &model)
 	if err != nil {
-		zap.S().Errorw("CreateCreditPayment Response Error : " + err.Error())
+		zap.S().Errorw("CreateCreditPayment error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -59,7 +58,7 @@ func (p *CreditController) Create(w http.ResponseWriter, r *http.Request) {
 	result.TotalPrice = &res.TotalPrice
 	resultJson, err := json.Marshal(result)
 	if err != nil {
-		zap.S().Errorw("JSON Marshal error : " + err.Error())
+		zap.S().Errorw("json.Marshal error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -77,13 +76,11 @@ func (p *CreditController) Update(w http.ResponseWriter, r *http.Request) {
 // Delete credit by AcceptNo
 // (DELETE /credit/{acceptNo})
 func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, acceptNo string) {
-	fmt.Println("start Delete")
-
 	repo := dynamodb.NewCreditRepository()
 	svc := domain.NewCreditService(&repo)
 	err := svc.DeleteCreditPayment(r.Context(), acceptNo)
 	if err != nil {
-		zap.S().Errorw("DeleteCreditPayment Response Error : " + err.Error())
+		zap.S().Errorw("DeleteCreditPayment error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -93,10 +90,9 @@ func (p *CreditController) Delete(w http.ResponseWriter, r *http.Request, accept
 // Find credit by AcceptNo
 // (GET /credit/{acceptNo})
 func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request, acceptNo string) {
-	fmt.Println("start GetByAcceptNo")
 	result, err := p.svc.GetCreditPayment(r.Context(), acceptNo)
 	if err != nil {
-		zap.S().Errorw("GetCreditPayment Response Error : " + err.Error())
+		zap.S().Errorw("GetCreditPayment error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	if result == nil {
@@ -105,7 +101,7 @@ func (p *CreditController) GetByAcceptNo(w http.ResponseWriter, r *http.Request,
 	}
 	resultJson, err := json.Marshal(result)
 	if err != nil {
-		zap.S().Errorw("JSON Marshal error : " + err.Error())
+		zap.S().Errorw("json.Marshal error : " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)

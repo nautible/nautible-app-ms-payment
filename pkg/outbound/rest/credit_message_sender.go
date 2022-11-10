@@ -42,11 +42,6 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 		return nil, err
 	}
 	// トレーシング用ヘッダを伝搬させる
-	fmt.Println(header.Get("x-b3-traceid"))
-	fmt.Println(header.Get("x-b3-spanid"))
-	fmt.Println(header.Get("x-b3-parentspanid"))
-	fmt.Println(header.Get("x-b3-sampled"))
-	fmt.Println(header.Get("x-b3-flags"))
 	req.Header.Add("x-b3-traceid", header.Get("x-b3-traceid"))
 	req.Header.Add("x-b3-spanid", header.Get("x-b3-spanid"))
 	req.Header.Add("x-b3-parentspanid", header.Get("x-b3-parentspanid"))
@@ -56,7 +51,6 @@ func (p *CreditMessageSender) CreateCreditPayment(ctx context.Context, request *
 	c := &http.Client{}
 	res, err := c.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -80,11 +74,6 @@ func (p *CreditMessageSender) GetByAcceptNo(ctx context.Context, acceptNo string
 		return nil, err
 	}
 	// トレーシング用ヘッダを伝搬させる
-	fmt.Println(header.Get("x-b3-traceid"))
-	fmt.Println(header.Get("x-b3-spanid"))
-	fmt.Println(header.Get("x-b3-parentspanid"))
-	fmt.Println(header.Get("x-b3-sampled"))
-	fmt.Println(header.Get("x-b3-flags"))
 	req.Header.Add("x-b3-traceid", header.Get("x-b3-traceid"))
 	req.Header.Add("x-b3-spanid", header.Get("x-b3-spanid"))
 	req.Header.Add("x-b3-parentspanid", header.Get("x-b3-parentspanid"))
@@ -111,11 +100,6 @@ func (p *CreditMessageSender) DeleteByAcceptNo(ctx context.Context, acceptNo str
 		return err
 	}
 	// トレーシング用ヘッダを伝搬させる
-	fmt.Println(header.Get("x-b3-traceid"))
-	fmt.Println(header.Get("x-b3-spanid"))
-	fmt.Println(header.Get("x-b3-parentspanid"))
-	fmt.Println(header.Get("x-b3-sampled"))
-	fmt.Println(header.Get("x-b3-flags"))
 	req.Header.Add("x-b3-traceid", header.Get("x-b3-traceid"))
 	req.Header.Add("x-b3-spanid", header.Get("x-b3-spanid"))
 	req.Header.Add("x-b3-parentspanid", header.Get("x-b3-parentspanid"))

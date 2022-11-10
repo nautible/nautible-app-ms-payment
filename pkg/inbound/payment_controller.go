@@ -68,8 +68,6 @@ func doCreate(w http.ResponseWriter, r *http.Request, svc *domain.PaymentService
 	defer body.Close()
 	ctx := context.WithValue(r.Context(), "header", r.Header)
 
-	fmt.Println(r.Header)
-
 	// CloudEventsで受け取ったデータを構造体にマッピング
 	buf := new(bytes.Buffer)
 	io.Copy(buf, body)
