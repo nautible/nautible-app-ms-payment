@@ -19,6 +19,8 @@ jobs:
     
     runs-on: ubuntu-latest
 
+    environment: develop # for azure oidc
+
     env:
       IMAGE_TAG: ${{ github.sha }}
 
@@ -38,7 +40,6 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-githubactions-ecr-access-role
         aws-region: ap-northeast-1
-    - run: aws sts get-caller-identity
     - name: Login to Amazon public ECR
       id: login-ecr
       run: |
@@ -73,20 +74,20 @@ jobs:
       id: login-acr
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Login Azure Docker
-      id: login-azure-docker
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
-        username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
-        password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Login Azure Acr
+      id: login-azure-acr
+      run: |
+        az acr login -n nautibledevacr
 
     - name: PaymentApp Build, tag, and push image to Azure ACR
       id: build-payment-image-service-acr
       env:
         DOCKER_BUILDKIT: 1
-        ACR_REGISTRY: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
+        ACR_REGISTRY: nautibledevacr.azurecr.io
         ACR_REPOSITORY: nautible-app-ms-payment
       run: |
         cd $GITHUB_WORKSPACE
@@ -98,7 +99,7 @@ jobs:
       id: build-credit-image-service-acr
       env:
         DOCKER_BUILDKIT: 1
-        ACR_REGISTRY: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
+        ACR_REGISTRY: nautibledevacr.azurecr.io
         ACR_REPOSITORY: nautible-app-ms-credit
       run: |
         cd $GITHUB_WORKSPACE
@@ -113,6 +114,7 @@ jobs:
         TOKEN: ${{ secrets.PAT }}
         BRANCH: ${{ github.ref_name }}
         APP_NAME: payment
+        ACR_REGISTRY: nautibledevacr.azurecr.io
       run: |
         cd $GITHUB_WORKSPACE/nautible-app-ms-$APP_NAME-manifest
         HTTP_STATUS=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $TOKEN" https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/branches/$BRANCH -o /dev/null -w '%{http_code}\n' -s)
@@ -139,6 +141,7 @@ jobs:
         BRANCH: ${{ github.ref_name }}
         TAG: update-image-feature-${{ github.sha }}
         APP_NAME: payment
+        ACR_REGISTRY: nautibledevacr.azurecr.io
       run: |
         cd $GITHUB_WORKSPACE/nautible-app-ms-$APP_NAME-manifest
         git fetch origin $BRANCH && git checkout $BRANCH
