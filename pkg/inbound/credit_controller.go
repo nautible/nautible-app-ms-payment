@@ -28,7 +28,7 @@ func NewCreditController(svc *domain.CreditService) *CreditController {
 // Healthz request
 func (p *CreditController) Healthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Health Check OK!")
+	fmt.Fprintf(w, "Health Check OK")
 }
 
 // Create Credit
