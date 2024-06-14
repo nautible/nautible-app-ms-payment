@@ -1,0 +1,52 @@
+name: Go CI Payment and Credit Application
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    environment: develop # for azure oidc
+
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Checkout manifest repo
+        uses: actions/checkout@v3
+        with:
+          repository: nautible/nautible-app-ms-payment-manifest
+          path: nautible-app-ms-payment-manifest
+          token: ${{ secrets.PAT }}
+
+      # AWS
+      - name: PaymentApp Build, tag, and push image to Amazon ECR
+        id: build-payment-image-service-ecr
+        env:
+          DOCKER_BUILDKIT: 1
+          ECR_REGISTRY: public.ecr.aws/nautible
+          ECR_REPOSITORY: nautible-app-ms-payment
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: CreditApp Build, tag, and push image to Amazon ECR
+        id: build-credit-image-service-ecr
+        env:
+          DOCKER_BUILDKIT: 1
+          ECR_REGISTRY: public.ecr.aws/nautible
+          ECR_REPOSITORY: nautible-app-ms-payment-credit
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

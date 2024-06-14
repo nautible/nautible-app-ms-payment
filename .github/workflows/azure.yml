@@ -1,14 +1,7 @@
 name: Go CI Payment and Credit Application
 
 on:
-  push:
-    branches: ['develop', 'feature/*', 'hotfix/*']
-    paths:
-      - 'cmd/**'
-      - 'pkg/**'
-      - 'package/**'
-      - '.github/**'
-  workflow_dispatch:
+  workflow_call:
 
 permissions:
   id-token: write
@@ -33,59 +26,31 @@ jobs:
           path: nautible-app-ms-payment-manifest
           token: ${{ secrets.PAT }}
 
-      # AWS
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-githubactions-ecr-access-role
-          aws-region: ap-northeast-1
-      - name: Login to Amazon public ECR
-        id: login-ecr
-        run: |
-          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/nautible
-        continue-on-error: true
-      - name: output step context_aws
-        run: echo $CONTEXT
+      # Azure
+      - name: PaymentApp Build, tag, and push image to Azure ACR
+        id: build-payment-image-service-acr
         env:
-          CONTEXT: ${{ toJSON(steps.login-ecr) }}
-
-      - name: login-ecr when command success
-        uses: ./.github/workflows/aws.yml
-        if: steps.login-ecr.outcome == 'success'
-
-      - name: login-ecr when command failure
-        run: echo "result - aws ecr login failure"
-        if: steps.login-ecr.outcome == 'failure'
-
-        # Azure
-      - name: Login via Azure CLI
-        id: login-acr
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Login Azure Acr
-        id: login-azure-acr
+          DOCKER_BUILDKIT: 1
+          ACR_REGISTRY: nautibledevacr.azurecr.io
+          ACR_REPOSITORY: nautible-app-ms-payment
         run: |
-          az acr login -n nautibledevacr
-        continue-on-error: true
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
 
-      - name: output step context_azure
-        run: echo $CONTEXT
+      - name: CreditApp Build, tag, and push image to Azure ACR
+        id: build-credit-image-service-acr
         env:
-          CONTEXT: ${{ toJSON(steps.login-azure-acr) }}
+          DOCKER_BUILDKIT: 1
+          ACR_REGISTRY: nautibledevacr.azurecr.io
+          ACR_REPOSITORY: nautible-app-ms-credit
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
 
-      - name: login-azure-acr when command success
-        uses: ./.github/workflows/azure.yml
-        if: steps.login-azure-acr.outcome == 'success'
-
-      - name: login-azure-acr when command failure
-        run: echo "result - azure acr login failure"
-        if: steps.login-azure-acr.outcome == 'failure'
-
-      # pullrequest
       - name: update feature branch image tag
         id: update-feature-branch-image-tag
         if: startsWith(github.ref_name, 'feature/')
