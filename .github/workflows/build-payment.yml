@@ -42,11 +42,6 @@ jobs:
           aws-region: ap-northeast-1
         continue-on-error: true
 
-      - name: output step context_aws
-        run: echo $CONTEXT
-        env:
-          CONTEXT: ${{ toJSON(steps.login-aws) }}
-
       - name: login-aws when command success
         uses: ./.github/workflows/aws.yml
         if: steps.login-aws.outcome == 'success'
@@ -64,11 +59,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         continue-on-error: true
-
-      - name: output step context_azure
-        run: echo $CONTEXT
-        env:
-          CONTEXT: ${{ toJSON(steps.login-azure) }}
 
       - name: login-azure when command success
         uses: ./.github/workflows/azure.yml
