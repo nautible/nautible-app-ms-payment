@@ -27,6 +27,11 @@ jobs:
           token: ${{ secrets.PAT }}
 
       # Azure
+      - name: Login Azure Acr
+        id: login-azure-acr
+        run: |
+          az acr login -n nautibledevacr
+
       - name: PaymentApp Build, tag, and push image to Azure ACR
         id: build-payment-image-service-acr
         env:

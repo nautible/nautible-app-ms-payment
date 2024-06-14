@@ -35,6 +35,7 @@ jobs:
 
       # AWS
       - name: Configure AWS credentials
+        id: login-aws
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-githubactions-ecr-access-role
@@ -44,43 +45,38 @@ jobs:
       - name: output step context_aws
         run: echo $CONTEXT
         env:
-          CONTEXT: ${{ toJSON(steps.login-ecr) }}
+          CONTEXT: ${{ toJSON(steps.login-aws) }}
 
-      - name: login-ecr when command success
+      - name: login-aws when command success
         uses: ./.github/workflows/aws.yml
-        if: steps.login-ecr.outcome == 'success'
+        if: steps.login-aws.outcome == 'success'
 
-      - name: login-ecr when command failure
-        run: echo "result - aws ecr login failure"
-        if: steps.login-ecr.outcome == 'failure'
+      - name: login-aws when command failure
+        run: echo "result - aws login failure"
+        if: steps.login-aws.outcome == 'failure'
 
         # Azure
       - name: Login via Azure CLI
-        id: login-acr
+        id: login-azure
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Login Azure Acr
-        id: login-azure-acr
-        run: |
-          az acr login -n nautibledevacr
         continue-on-error: true
 
       - name: output step context_azure
         run: echo $CONTEXT
         env:
-          CONTEXT: ${{ toJSON(steps.login-azure-acr) }}
+          CONTEXT: ${{ toJSON(steps.login-azure) }}
 
-      - name: login-azure-acr when command success
+      - name: login-azure when command success
         uses: ./.github/workflows/azure.yml
-        if: steps.login-azure-acr.outcome == 'success'
+        if: steps.login-azure.outcome == 'success'
 
-      - name: login-azure-acr when command failure
-        run: echo "result - azure acr login failure"
-        if: steps.login-azure-acr.outcome == 'failure'
+      - name: login-azure when command failure
+        run: echo "result - azure login failure"
+        if: steps.login-azure.outcome == 'failure'
 
       # pullrequest
       - name: update feature branch image tag
