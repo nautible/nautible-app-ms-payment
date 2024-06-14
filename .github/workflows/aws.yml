@@ -27,6 +27,11 @@ jobs:
           token: ${{ secrets.PAT }}
 
       # AWS
+      - name: Login to Amazon public ECR
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/nautible
+
       - name: PaymentApp Build, tag, and push image to Amazon ECR
         id: build-payment-image-service-ecr
         env:
