@@ -42,13 +42,41 @@ jobs:
           aws-region: ap-northeast-1
         continue-on-error: true
 
-      - name: login-aws when command success
-        uses: ./.github/workflows/aws.yml
-        if: steps.login-aws.outcome == 'success'
-
       - name: login-aws when command failure
         run: echo "result - aws login failure"
         if: steps.login-aws.outcome == 'failure'
+
+      - name: Login to Amazon public ECR
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/nautible
+        if: steps.login-aws.outcome == 'success'
+
+      - name: PaymentApp Build, tag, and push image to Amazon ECR
+        id: build-payment-image-service-ecr
+        env:
+          DOCKER_BUILDKIT: 1
+          ECR_REGISTRY: public.ecr.aws/nautible
+          ECR_REPOSITORY: nautible-app-ms-payment
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        if: steps.login-aws.outcome == 'success'
+
+      - name: CreditApp Build, tag, and push image to Amazon ECR
+        id: build-credit-image-service-ecr
+        env:
+          DOCKER_BUILDKIT: 1
+          ECR_REGISTRY: public.ecr.aws/nautible
+          ECR_REPOSITORY: nautible-app-ms-payment-credit
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        if: steps.login-aws.outcome == 'success'
 
         # Azure
       - name: Login via Azure CLI
@@ -60,13 +88,41 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         continue-on-error: true
 
-      - name: login-azure when command success
-        uses: ./.github/workflows/azure.yml
-        if: steps.login-azure.outcome == 'success'
-
       - name: login-azure when command failure
         run: echo "result - azure login failure"
         if: steps.login-azure.outcome == 'failure'
+
+      - name: Login Azure Acr
+        id: login-azure-acr
+        run: |
+          az acr login -n nautibledevacr
+        if: steps.login-azure.outcome == 'success'
+
+      - name: PaymentApp Build, tag, and push image to Azure ACR
+        id: build-payment-image-service-acr
+        env:
+          DOCKER_BUILDKIT: 1
+          ACR_REGISTRY: nautibledevacr.azurecr.io
+          ACR_REPOSITORY: nautible-app-ms-payment
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
+        if: steps.login-azure.outcome == 'success'
+
+      - name: CreditApp Build, tag, and push image to Azure ACR
+        id: build-credit-image-service-acr
+        env:
+          DOCKER_BUILDKIT: 1
+          ACR_REGISTRY: nautibledevacr.azurecr.io
+          ACR_REPOSITORY: nautible-app-ms-credit
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
+          docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
+        if: steps.login-azure.outcome == 'success'
 
       # pullrequest
       - name: update feature branch image tag
