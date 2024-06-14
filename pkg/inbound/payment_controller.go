@@ -38,7 +38,7 @@ func NewPaymentController(svc *domain.PaymentService) *PaymentController {
 
 func (p *PaymentController) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Health Check OK")
+	fmt.Fprintf(w, "Health Check OK!")
 }
 
 func (p *PaymentController) Create(w http.ResponseWriter, r *http.Request) {
