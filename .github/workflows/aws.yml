@@ -11,21 +11,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    environment: develop # for azure oidc
-
     env:
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      - name: Checkout manifest repo
-        uses: actions/checkout@v3
-        with:
-          repository: nautible/nautible-app-ms-payment-manifest
-          path: nautible-app-ms-payment-manifest
-          token: ${{ secrets.PAT }}
-
       # AWS
       - name: Login to Amazon public ECR
         id: login-ecr

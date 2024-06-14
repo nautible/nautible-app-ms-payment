@@ -17,15 +17,6 @@ jobs:
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      - name: Checkout manifest repo
-        uses: actions/checkout@v3
-        with:
-          repository: nautible/nautible-app-ms-payment-manifest
-          path: nautible-app-ms-payment-manifest
-          token: ${{ secrets.PAT }}
-
       # Azure
       - name: Login Azure Acr
         id: login-azure-acr
