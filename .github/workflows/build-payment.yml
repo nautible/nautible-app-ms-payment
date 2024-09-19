@@ -31,7 +31,6 @@ jobs:
         with:
           repository: nautible/nautible-app-ms-payment-manifest
           path: nautible-app-ms-payment-manifest
-          token: ${{ secrets.PAT }}
 
       # AWS
       - name: Configure AWS credentials
