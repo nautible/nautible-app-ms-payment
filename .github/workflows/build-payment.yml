@@ -25,9 +25,9 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Checkout manifest repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: nautible/nautible-app-ms-payment-manifest
           path: nautible-app-ms-payment-manifest
@@ -36,7 +36,7 @@ jobs:
       # AWS
       - name: Configure AWS credentials
         id: login-aws
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-githubactions-ecr-access-role
           aws-region: ap-northeast-1
