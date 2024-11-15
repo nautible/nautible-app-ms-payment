@@ -31,7 +31,7 @@ jobs:
         with:
           repository: nautible/nautible-app-ms-payment-manifest
           path: nautible-app-ms-payment-manifest
-
+          token: ${{ secrets.PAT }}
       # AWS
       - name: Configure AWS credentials
         id: login-aws
@@ -172,4 +172,4 @@ jobs:
           git add .
           git commit -m "update manifest"
           git push --set-upstream origin $TAG
-          curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $TOKEN" "https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$TAG'", "base": "'$BRANCH'"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token $TOKEN" "https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$TAG'", "base": "'$BRANCH'"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
