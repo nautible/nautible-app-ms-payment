@@ -197,8 +197,8 @@ jobs:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           BRANCH: ${{ github.ref_name }}
           ACR_REGISTRY: nautibledevacr.azurecr.io
-          FRONT_APP_NAME: payment
-          BACK_APP_NAME: payment-credit
+          APP_NAME: payment
+          CREDIT_APP_NAME: payment-credit
         run: |
           cd "$GITHUB_WORKSPACE"/nautible-app-ms-"$APP_NAME"-manifest
           HTTP_STATUS=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $GH_TOKEN" https://api.github.com/repos/nautible/nautible-app-ms-"$APP_NAME"-manifest/branches/"$BRANCH" -o /dev/null -w '%{http_code}\n' -s)
