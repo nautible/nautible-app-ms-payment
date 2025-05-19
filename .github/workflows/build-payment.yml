@@ -10,32 +10,62 @@ on:
       - '.github/**'
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
+defaults:
+  run:
+    shell: bash
 
 jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Setup Go 1.23.x
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: '1.23.x'
+      - name: Install actionlint
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@03d0035246f3e81f36aed592ffb4bebf33a03106 # v1.7.7
+      - name: Run actionlint
+        run: actionlint
+      - name: Install ghalint
+        run: go install github.com/suzuki-shunsuke/ghalint/cmd/ghalint@b372f2711a9654201bf2600ad504d600186a99ef # v1.4.0
+      - name: Run ghalint
+        run: ghalint run
+
   build:
+    needs: static-analysis
     runs-on: ubuntu-latest
 
     environment: develop # for azure oidc
 
+    permissions:
+      id-token: write
+      contents: read
+
     env:
       IMAGE_TAG: ${{ github.sha }}
 
+    timeout-minutes: 300
+
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Checkout manifest repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          repository: nautible/nautible-app-ms-payment-manifest
-          path: nautible-app-ms-payment-manifest
-          token: ${{ secrets.PAT }}
-      # AWS
+          persist-credentials: false
+
+        # AWS
       - name: Configure AWS credentials
         id: login-aws
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/nautible-dev-githubactions-ecr-access-role
           aws-region: ap-northeast-1
@@ -57,11 +87,12 @@ jobs:
           DOCKER_BUILDKIT: 1
           ECR_REGISTRY: public.ecr.aws/nautible
           ECR_REPOSITORY: nautible-app-ms-payment
+          APP_NAME: payment
         run: |
-          cd $GITHUB_WORKSPACE
-          docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          cd "$GITHUB_WORKSPACE"
+          docker build --cache-from="$ECR_REGISTRY"/"$ECR_REPOSITORY":latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ECR_REGISTRY"/"$ECR_REPOSITORY":latest -t "$ECR_REGISTRY/""$ECR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
+          docker push "$ECR_REGISTRY"/"$ECR_REPOSITORY":latest
+          docker push "$ECR_REGISTRY"/"$ECR_REPOSITORY":"$IMAGE_TAG"
         if: steps.login-aws.outcome == 'success'
 
       - name: CreditApp Build, tag, and push image to Amazon ECR
@@ -70,17 +101,18 @@ jobs:
           DOCKER_BUILDKIT: 1
           ECR_REGISTRY: public.ecr.aws/nautible
           ECR_REPOSITORY: nautible-app-ms-payment-credit
+          APP_NAME: credit
         run: |
-          cd $GITHUB_WORKSPACE
-          docker build --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          cd "$GITHUB_WORKSPACE"
+          docker build --cache-from="$ECR_REGISTRY"/"$ECR_REPOSITORY":latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ECR_REGISTRY"/"$ECR_REPOSITORY":latest -t "$ECR_REGISTRY/""$ECR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
+          docker push "$ECR_REGISTRY"/"$ECR_REPOSITORY":latest
+          docker push "$ECR_REGISTRY"/"$ECR_REPOSITORY":"$IMAGE_TAG"
         if: steps.login-aws.outcome == 'success'
 
         # Azure
       - name: Login via Azure CLI
         id: login-azure
-        uses: azure/login@v1
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -103,11 +135,12 @@ jobs:
           DOCKER_BUILDKIT: 1
           ACR_REGISTRY: nautibledevacr.azurecr.io
           ACR_REPOSITORY: nautible-app-ms-payment
+          APP_NAME: payment
         run: |
-          cd $GITHUB_WORKSPACE
-          docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/payment/Dockerfile .
-          docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
-          docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
+          cd "$GITHUB_WORKSPACE"
+          docker build --cache-from="$ACR_REGISTRY"/"$ACR_REPOSITORY":latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
+          docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest
+          docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG"
         if: steps.login-azure.outcome == 'success'
 
       - name: CreditApp Build, tag, and push image to Azure ACR
@@ -116,36 +149,70 @@ jobs:
           DOCKER_BUILDKIT: 1
           ACR_REGISTRY: nautibledevacr.azurecr.io
           ACR_REPOSITORY: nautible-app-ms-credit
+          APP_NAME: credit
         run: |
-          cd $GITHUB_WORKSPACE
-          docker build --cache-from=$ACR_REGISTRY/$ACR_REPOSITORY:latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t $ACR_REGISTRY/$ACR_REPOSITORY:latest -t $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG -f ./package/credit/Dockerfile .
-          docker push $ACR_REGISTRY/$ACR_REPOSITORY:latest
-          docker push $ACR_REGISTRY/$ACR_REPOSITORY:$IMAGE_TAG
+          cd "$GITHUB_WORKSPACE"
+          docker build --cache-from="$ACR_REGISTRY"/"$ACR_REPOSITORY":latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
+          docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest
+          docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG"
         if: steps.login-azure.outcome == 'success'
 
-      # pullrequest
+  pullrequest:
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment: develop # for azure oidc
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+
+    timeout-minutes: 60
+
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          repositories: |
+            nautible-app-ms-payment
+            nautible-app-ms-payment-manifest
+      - name: Checkout manifest repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: nautible/nautible-app-ms-payment-manifest
+          path: nautible-app-ms-payment-manifest
+          token: ${{ steps.generate-token.outputs.token }}
       - name: update feature branch image tag
         id: update-feature-branch-image-tag
         if: startsWith(github.ref_name, 'feature/')
         env:
-          TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           BRANCH: ${{ github.ref_name }}
-          APP_NAME: payment
           ACR_REGISTRY: nautibledevacr.azurecr.io
+          APP_NAME: payment
+          CREDIT_APP_NAME: payment-credit
         run: |
-          cd $GITHUB_WORKSPACE/nautible-app-ms-$APP_NAME-manifest
-          HTTP_STATUS=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $TOKEN" https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/branches/$BRANCH -o /dev/null -w '%{http_code}\n' -s)
+          cd "$GITHUB_WORKSPACE"/nautible-app-ms-"$APP_NAME"-manifest
+          HTTP_STATUS=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $GH_TOKEN" https://api.github.com/repos/nautible/nautible-app-ms-"$APP_NAME"-manifest/branches/"$BRANCH" -o /dev/null -w '%{http_code}\n' -s)
           if [ "$HTTP_STATUS" != '200' ]; then
             echo 'couldnt find remote branch. skip update manifest.'
             exit 0
           fi
-          git fetch origin $BRANCH && git checkout $BRANCH
-          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./base/$APP_NAME-deploy.yaml 
-          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:'$IMAGE_TAG'/' ./base/$APP_NAME-credit-deploy.yaml 
-          sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-deploy.yaml 
-          sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-credit-deploy.yaml 
-          git config user.name github-actions[bot]
-          git config user.email github-actions[bot]@users.noreply.github.com
+          git fetch origin "$BRANCH" && git checkout "$BRANCH"
+          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$APP_NAME"':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/aws/dev/"$APP_NAME"-deploy.yaml 
+          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$CREDIT_APP_NAME"':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$CREDIT_APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/aws/dev/"$CREDIT_APP_NAME"-deploy.yaml 
+          sed -i 's/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$APP_NAME"':\(.*\)/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/azure/dev/"$APP_NAME"-deploy.yaml 
+          sed -i 's/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$CREDIT_APP_NAME"':\(.*\)/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$CREDIT_APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/azure/dev/"$CREDIT_APP_NAME"-deploy.yaml 
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           git add .
           git commit -m "update manifest"
           git push
@@ -154,22 +221,23 @@ jobs:
         id: pull-request
         if: github.ref_name == 'develop' || startsWith(github.ref_name, 'hotfix/')
         env:
-          TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           BRANCH: ${{ github.ref_name }}
           TAG: update-image-feature-${{ github.sha }}
-          APP_NAME: payment
           ACR_REGISTRY: nautibledevacr.azurecr.io
+          APP_NAME: payment
+          CREDIT_APP_NAME: payment-credit
         run: |
-          cd $GITHUB_WORKSPACE/nautible-app-ms-$APP_NAME-manifest
-          git fetch origin $BRANCH && git checkout $BRANCH
-          git checkout -b $TAG $BRANCH
-          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./base/$APP_NAME-deploy.yaml 
-          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'$APP_NAME'-credit:'$IMAGE_TAG'/' ./base/$APP_NAME-credit-deploy.yaml 
-          sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-'$APP_NAME':'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-deploy.yaml 
-          sed -i 's/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:\(.*\)/image: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}\/nautible-app-ms-credit:'$IMAGE_TAG'/' ./overlays/azure/dev/$APP_NAME-credit-deploy.yaml 
-          git config user.name github-actions[bot]
-          git config user.email github-actions[bot]@users.noreply.github.com
+          cd "$GITHUB_WORKSPACE"/nautible-app-ms-"$APP_NAME"-manifest
+          git fetch origin "$BRANCH" && git checkout "$BRANCH"
+          git checkout -b "$TAG" "$BRANCH"
+          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$APP_NAME"':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/aws/dev/"$APP_NAME"-deploy.yaml 
+          sed -i 's/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$CREDIT_APP_NAME"':\(.*\)/image: public.ecr.aws\/nautible\/nautible-app-ms-'"$CREDIT_APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/aws/dev/"$CREDIT_APP_NAME"-deploy.yaml 
+          sed -i 's/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$APP_NAME"':\(.*\)/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/azure/dev/"$APP_NAME"-deploy.yaml 
+          sed -i 's/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$CREDIT_APP_NAME"':\(.*\)/image: '"$ACR_REGISTRY"'\/nautible-app-ms-'"$CREDIT_APP_NAME"':'"$IMAGE_TAG"'/' ./overlays/azure/dev/"$CREDIT_APP_NAME"-deploy.yaml 
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           git add .
           git commit -m "update manifest"
-          git push --set-upstream origin $TAG
-          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token $TOKEN" "https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'$TAG'", "base": "'$BRANCH'"}' -o /dev/null -w 'httpstatus:%{http_code}\n' -s
+          git push --set-upstream origin "$TAG"
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/nautible/nautible-app-ms-$APP_NAME-manifest/pulls" -d '{"title": "new image deploy request", "head": "nautible:'"$TAG"'", "base": "'"$BRANCH"'"}'  -o /dev/null -w 'httpstatus:%{http_code}\n' -s
