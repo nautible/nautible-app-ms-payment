@@ -101,7 +101,7 @@ jobs:
           DOCKER_BUILDKIT: 1
           ECR_REGISTRY: public.ecr.aws/nautible
           ECR_REPOSITORY: nautible-app-ms-payment-credit
-          APP_NAME: payment-credit
+          APP_NAME: credit
         run: |
           cd "$GITHUB_WORKSPACE"
           docker build --cache-from="$ECR_REGISTRY"/"$ECR_REPOSITORY":latest --build-arg CLOUD=aws --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ECR_REGISTRY"/"$ECR_REPOSITORY":latest -t "$ECR_REGISTRY/""$ECR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
