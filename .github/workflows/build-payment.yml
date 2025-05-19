@@ -59,7 +59,10 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      # AWS
+        with:
+          persist-credentials: false
+
+        # AWS
       - name: Configure AWS credentials
         id: login-aws
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
@@ -135,7 +138,7 @@ jobs:
           APP_NAME: payment
         run: |
           cd "$GITHUB_WORKSPACE"
-          docker build --cache-from="$ACR_REGISTRY"/"$ACR_REPOSITORY":latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG" -f ./package/$APP_NAME/Dockerfile .
+          docker build --cache-from="$ACR_REGISTRY"/"$ACR_REPOSITORY":latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
           docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest
           docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG"
         if: steps.login-azure.outcome == 'success'
@@ -148,10 +151,10 @@ jobs:
           ACR_REPOSITORY: nautible-app-ms-credit
           APP_NAME: credit
         run: |
-          cd $GITHUB_WORKSPACE
-          docker build --cache-from="$ACR_REGISTRY"/"$ACR_REPOSITORY":latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":$IMAGE_TAG -f ./package/$APP_NAME/Dockerfile .
+          cd "$GITHUB_WORKSPACE"
+          docker build --cache-from="$ACR_REGISTRY"/"$ACR_REPOSITORY":latest --build-arg CLOUD=azure --build-arg BUILDKIT_INLINE_CACHE=1 -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest -t "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG" -f ./package/"$APP_NAME"/Dockerfile .
           docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":latest
-          docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":$IMAGE_TAG
+          docker push "$ACR_REGISTRY"/"$ACR_REPOSITORY":"$IMAGE_TAG"
         if: steps.login-azure.outcome == 'success'
 
   pullrequest:
